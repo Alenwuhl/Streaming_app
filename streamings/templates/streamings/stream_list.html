@@ -1,0 +1,73 @@
+{% extends 'base/layout.html' %}
+
+{% block title %}Active Streamings{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Títulos de sección con pestañas mejoradas -->
+            <div class="d-flex justify-content-center align-items-center mb-4 tab-container">
+                <a href="{% url 'stream_list' %}" class="tab-title {% if not following_filter %}active-tab{% endif %}">Active Streamings</a>
+                <span class="separator"></span>
+                <a href="{% url 'stream_list' %}?following=true" class="tab-title {% if following_filter %}active-tab{% endif %}">Following Users</a>
+            </div>
+
+            <!-- Barra de búsqueda -->
+            <form method="get" action="{% url 'stream_list' %}" class="form-inline mb-4 justify-content-center">
+                <div class="input-group">
+                    <input type="text" name="query" class="form-control" placeholder="Search by username" aria-label="Search by username" value="{{ query|default:'' }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Mostrar streams dependiendo del filtro activo -->
+            {% if following_filter %}
+                <h4 class="text-center text-secondary mb-4">Streams from Users You Follow</h4>
+                <div class="list-group">
+                    {% for stream in following_streams %}
+                        <div class="list-group-item list-group-item-action shadow mb-4 p-3" style="border-radius: 10px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-1 font-weight-bold text-dark">{{ stream.title }}</h5>
+                                <small class="text-muted">Started: {{ stream.start_time|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <p class="mb-2">{{ stream.description }}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted">
+                                    Hosted by: <a href="{% url 'profile' user_id=stream.host.id %}" class="text-primary font-weight-bold">{{ stream.host.username }}</a>
+                                </small>
+                                <a href="{% url 'streaming_view' stream.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-play-circle"></i> Watch Live
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <h4 class="text-center text-secondary mb-4">All Active Streams</h4>
+                <div class="list-group">
+                    {% for stream in streams %}
+                        <div class="list-group-item list-group-item-action shadow mb-4 p-3" style="border-radius: 10px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-1 font-weight-bold text-dark">{{ stream.title }}</h5>
+                                <small class="text-muted">Started: {{ stream.start_time|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <p class="mb-2">{{ stream.description }}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted">
+                                    Hosted by: <a href="{% url 'profile' user_id=stream.host.id %}" class="text-primary font-weight-bold">{{ stream.host.username }}</a>
+                                </small>
+                                <a href="{% url 'streaming_view' stream.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-play-circle"></i> Watch Live
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
