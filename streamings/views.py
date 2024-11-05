@@ -16,11 +16,13 @@ def start_stream(request):
             stream.has_ended = False  # Asegurarse de que no esté marcado como finalizado
             stream.save()
             print('Stream creado y en vivo')
-            return redirect('stream_list')  # Redirige a la lista de streamings activos
+            # Redirige a la vista de streaming usando el ID del stream creado
+            return redirect('streaming_view', stream_id=stream.id)
     else:
         form = StreamingForm()
         print('Formulario creado')
     return render(request, 'streamings/start_stream.html', {'form': form})
+
 
 @login_required
 def stream_list(request):
@@ -30,31 +32,45 @@ def stream_list(request):
     streams = Streaming.objects.filter(is_live=True)
 
     # Verificar si el filtro de following está activado
-    following_filter = request.GET.get('following')
+    following_filter = request.GET.get('following') == 'true'  # Asegurarse de que sea booleano
     if following_filter:
         # Filtrar por los usuarios que sigue el usuario actual
         streams = streams.filter(host__in=current_user.following.all())
+        no_following_streams = not streams.exists()
+    else:
+        no_following_streams = False
 
-    # Búsqueda por nombre de usuario
+    # Búsqueda por nombre de usuario (insensible a mayúsculas)
     query = request.GET.get('query')
+    user_data = []
     if query:
+        # Filtrar usuarios insensible a mayúsculas
         user_results = CustomUser.objects.filter(username__icontains=query)
-        user_data = []
+        
+        # Crear lista de datos para cada usuario que coincida con la búsqueda
         for user in user_results:
-            has_active_stream = user.stream_set.filter(is_live=True).exists()
+            has_active_stream = user.streams.filter(is_live=True).exists()
             user_data.append({
                 'user': user,
                 'has_active_stream': has_active_stream,
-                'active_stream': user.stream_set.filter(is_live=True).first() if has_active_stream else None
+                'active_stream': user.streams.filter(is_live=True).first() if has_active_stream else None
             })
+        no_user_found = not user_data
     else:
         user_data = None
+        no_user_found = False
+
+    # Bandera para detectar cuando no hay streams activos
+    no_active_streams = not streams.exists()
 
     context = {
         'streams': streams,
         'user_data': user_data,
         'query': query,
-        'following_filter': following_filter
+        'following_filter': following_filter,
+        'no_active_streams': no_active_streams,
+        'no_following_streams': no_following_streams,
+        'no_user_found': no_user_found,
     }
     return render(request, 'streamings/stream_list.html', context)
 

@@ -30,10 +30,13 @@ def login_view(request):
 
 @login_required
 def profile_view(request, user_id=None):
+    # Obtén el perfil del usuario en función del ID o del usuario autenticado
     profile_user = get_object_or_404(CustomUser, id=user_id) if user_id else request.user
     followers_count = profile_user.followers.count()
     following_count = profile_user.following.count()
-    recent_streams = profile_user.streaming_set.filter(is_live=False).order_by('-start_time')[:5]
+    
+    # Usa 'streams' en lugar de 'streaming_set' para acceder a los streams del usuario
+    recent_streams = profile_user.streams.filter(is_live=False).order_by('-start_time')[:5]
     
     # Verificar si el usuario actual sigue al usuario cuyo perfil está viendo
     is_following = profile_user.followers.filter(id=request.user.id).exists()
@@ -45,6 +48,8 @@ def profile_view(request, user_id=None):
         'recent_streams': recent_streams,
         'is_following': is_following,
     })
+
+
 
 @login_required
 def follow_user(request, user_id):

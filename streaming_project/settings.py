@@ -123,8 +123,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'users/static']  # Define la ubicación de tus archivos estáticos.
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Django recogerá todos los archivos estáticos aquí.
+STATICFILES_DIRS = [
+    BASE_DIR / 'streamings/static',
+    BASE_DIR / 'users/static',
+]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 
 # Default primary key field type
