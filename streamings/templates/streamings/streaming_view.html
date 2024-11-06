@@ -3,7 +3,7 @@
 {% block title %}{{ stream.title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+<div class="container-fluid d-flex justify-content-center align-items-center" style="min-height: 100vh;" data-stream-id="{{ stream.id }}" data-is-host="{% if user == stream.host %}true{% else %}false{% endif %}">
     <div class="row justify-content-center w-100">
         <div class="col-md-10 col-12">
             <!-- Título y Descripción -->
@@ -60,13 +60,10 @@
                     <button id="muteButton" class="btn btn-outline-primary mx-2">
                         <i class="fas fa-volume-mute"></i>
                     </button>
-                    <!-- Botón para finalizar el streaming -->
-                    <form method="POST" action="{% url 'end_stream' stream.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger mx-2">
-                            <i class="fas fa-stop-circle"></i> End Streaming
-                        </button>
-                    </form>
+                    <!-- Botón para iniciar/finalizar el streaming -->
+                    <button id="startEndStreamingButton" class="btn btn-success mx-2" data-stream-id="{{ stream.id }}">
+                        <i class="fas fa-video"></i> Start Streaming
+                    </button>
                 {% endif %}
                 <!-- Botón de Pantalla Completa -->
                 <button id="fullscreenButton" class="btn btn-outline-secondary mx-2">
@@ -81,6 +78,5 @@
 <script defer src="{% static 'js/webrtc.js' %}"></script>
 <script src="{% static 'chat/chat.js' %}"></script>
 <script defer src="{% static 'js/video_controls.js' %}"></script>
-<body data-stream-id="{{ stream.id }}" 
-    data-is-host="{% if user == stream.host %}true{% else %}false{% endif %}">
+<script src="{% static 'js/stream_recorder.js' %}"></script>
 {% endblock %}

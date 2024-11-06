@@ -15,14 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     websocket.onopen = () => {
         console.log("WebSocket is connected");
-        if (document.body.getAttribute('data-is-host') === "true") {
+    
+        const isHost = document.body.getAttribute('data-is-host') === "true";
+    
+        if (isHost) {
             console.log("Starting as host. Waiting for viewer to be ready...");
-            initializeLocalStream();  // Asegura el video local de inmediato
+            initializeLocalStream();  // Asegura el video local de inmediato para el host
         } else {
             console.log("Starting as viewer.");
             websocket.send(JSON.stringify({ type: 'ready' }));
         }
     };
+    
 
     websocket.onmessage = async (event) => {
         const message = JSON.parse(event.data);

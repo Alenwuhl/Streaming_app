@@ -3,6 +3,7 @@ const videoElement = document.getElementById('remoteVideo') || document.getEleme
 const muteButton = document.getElementById('muteButton');
 const fullscreenButton = document.getElementById('fullscreenButton');
 
+
 // Mute/Unmute con cambio de icono (solo para el host)
 if (muteButton) {
     muteButton.addEventListener('click', () => {

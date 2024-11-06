@@ -1,9 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from .forms import StreamingForm
 from .models import Streaming
 from users.models import CustomUser
 from django.shortcuts import get_object_or_404
+from django.http import Http404
+from django.http import JsonResponse
+
 
 @login_required
 def start_stream(request):
@@ -12,16 +16,31 @@ def start_stream(request):
         if form.is_valid():
             stream = form.save(commit=False)
             stream.host = request.user
-            stream.is_live = True  # Marcar el stream como en vivo al crearlo
-            stream.has_ended = False  # Asegurarse de que no esté marcado como finalizado
+            stream.is_live = False  # Crear el stream en modo offline
+            stream.has_ended = False
             stream.save()
-            print('Stream creado y en vivo')
-            # Redirige a la vista de streaming usando el ID del stream creado
+            # Redirige a streaming_view con el ID del stream creado
             return redirect('streaming_view', stream_id=stream.id)
     else:
         form = StreamingForm()
-        print('Formulario creado')
     return render(request, 'streamings/start_stream.html', {'form': form})
+
+@login_required
+@require_POST
+def start_stream_live(request, stream_id):
+    print(f"Attempting to start stream with ID: {stream_id}")
+    stream = get_object_or_404(Streaming, id=stream_id, host=request.user)
+    print(f"Stream found: {stream}")
+    print(f"Stream is_live: {stream.is_live}, has_ended: {stream.has_ended}")
+
+    if not stream.is_live and not stream.has_ended:
+        stream.is_live = True
+        stream.save()
+        print("Stream is now live.")
+        return JsonResponse({"status": "success", "message": "Stream is now live."})
+    
+    print("Unable to start the stream.")
+    return JsonResponse({"status": "error", "message": "Unable to start the stream."})
 
 
 @login_required
@@ -96,7 +115,12 @@ def manage_stream(request, stream_id):
 
 
 def streaming_view(request, stream_id):
-    stream = get_object_or_404(Streaming, id=stream_id, is_live=True, has_ended=False)
+    stream = get_object_or_404(Streaming, id=stream_id)
+
+    # Permitir acceso al host o a cualquier usuario si el stream está en vivo
+    if not stream.is_live and request.user != stream.host:
+        raise Http404("No se ha encontrado un stream activo para esta solicitud.")
+
     return render(request, 'streamings/streaming_view.html', {'stream': stream})
 
 @login_required
@@ -119,3 +143,18 @@ def following_streams(request):
     following_users = request.user.following.all()
     streams = Streaming.objects.filter(is_live=True, host__in=following_users)
     return render(request, 'streamings/following_streams.html', {'streams': streams})
+
+def save_video_file(request, stream_id):
+    if request.method == "POST":
+        streaming = get_object_or_404(Streaming, id=stream_id)
+        
+        # Asegúrate de que el archivo de video esté en la solicitud
+        if 'video' in request.FILES:
+            video_file = request.FILES['video'].read()  # Lee el contenido del archivo
+            streaming.video_file = video_file  # Guarda en el campo BLOB
+            streaming.has_ended = True  # Marca el streaming como terminado
+            streaming.save()
+            return JsonResponse({"status": "success"}, status=200)
+        
+        return JsonResponse({"status": "error", "message": "No video file found"}, status=400)
+    return JsonResponse({"status": "error"}, status=400)
