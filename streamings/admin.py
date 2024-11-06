@@ -1,3 +1,4 @@
 from django.contrib import admin
+from .models import Streaming
 
-# Register your models here.
+admin.site.register(Streaming)

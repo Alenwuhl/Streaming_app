@@ -10,6 +10,7 @@ urlpatterns = [
     path('', lambda request: redirect('stream_list')),
     path('streamings/', include('streamings.urls')),
     path('accounts/login/', lambda request: redirect('/users/login/')),
+    path('chat/', include('chat.urls')), 
 ]
 
 if settings.DEBUG:

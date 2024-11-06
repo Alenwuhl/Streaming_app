@@ -9,6 +9,7 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'users/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static '/css/chat.css' %}">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
@@ -62,7 +63,7 @@
     </nav>
 
     <!-- Main content block with adjusted top margin to avoid overlap with fixed navbar -->
-    <div class="container" style="padding-top: 80px; min-height: 80vh; background: #f5f7fa; border-radius: 10px;">
+    <div class="container-fluid px-3" style="min-height: 80vh; background: #f5f7fa; border-radius: 10px;">
         {% block content %}
         {% endblock %}
     </div>

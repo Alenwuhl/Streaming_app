@@ -3,6 +3,12 @@ body {
     font-family: 'Roboto', sans-serif;
     color: #333;
     background: linear-gradient(135deg, #f0f4f8, #d9e3f0); /* Fondo gradiente para toda la página */
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+.container-fluid {
+    padding: 0;
 }
 
 /* Navbar */
