@@ -9,6 +9,7 @@ class Streaming(models.Model):
     is_live = models.BooleanField(default=False)
     has_ended = models.BooleanField(default=False)
     video_file = models.BinaryField(null=True, blank=True)  # Campo BLOB
+    recorded_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.title

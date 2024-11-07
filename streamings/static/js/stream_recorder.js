@@ -122,8 +122,7 @@ async function stopRecordingAndSave(streamId) {
 
     mediaRecorder.onstop = async () => {
         const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-        console.log("Recorded video blob size:", videoBlob.size);
-
+        console.log("Blob size onstop:", videoBlob.size); 
         await uploadVideoToServer(videoBlob, streamId);
 
         // Actualiza el estado del stream en el servidor para finalizar

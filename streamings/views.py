@@ -1,12 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from .forms import StreamingForm
 from .models import Streaming
 from users.models import CustomUser
-from django.shortcuts import get_object_or_404
-from django.http import Http404
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse, StreamingHttpResponse
+from django.utils import timezone
+
 
 
 @login_required
@@ -131,6 +131,7 @@ def end_stream(request, stream_id):
     if request.method == 'POST':
         stream.is_live = False
         stream.has_ended = True
+        stream.recorded_date = timezone.now()
         stream.save()  # Guarda los cambios en la base de datos
         
         # Redirige a la lista de streams activos
@@ -145,16 +146,35 @@ def following_streams(request):
     return render(request, 'streamings/following_streams.html', {'streams': streams})
 
 def save_video_file(request, stream_id):
-    if request.method == "POST":
-        streaming = get_object_or_404(Streaming, id=stream_id)
-        
-        # Asegúrate de que el archivo de video esté en la solicitud
-        if 'video' in request.FILES:
-            video_file = request.FILES['video'].read()  # Lee el contenido del archivo
-            streaming.video_file = video_file  # Guarda en el campo BLOB
-            streaming.has_ended = True  # Marca el streaming como terminado
-            streaming.save()
-            return JsonResponse({"status": "success"}, status=200)
-        
-        return JsonResponse({"status": "error", "message": "No video file found"}, status=400)
-    return JsonResponse({"status": "error"}, status=400)
+    if request.method == "POST" and request.FILES.get('video'):
+        streaming = Streaming.objects.get(id=stream_id)
+        video_file = request.FILES['video'].read()  # Lee el archivo completo
+        streaming.video_file = video_file
+        streaming.has_ended = True
+        streaming.save()
+        print(f"Video file size saved in DB: {len(video_file)} bytes")
+        return JsonResponse({"status": "success"}, status=200)
+    return JsonResponse({"status": "error", "message": "No video file found"}, status=400)
+
+@login_required
+def view_recorded_stream(request, stream_id):
+    # Obtén el stream desde la base de datos
+    stream = get_object_or_404(Streaming, id=stream_id, has_ended=True)
+
+    # Si el video existe, pasa el stream a la plantilla para reproducción
+    if stream.video_file:
+        return render(request, 'streamings/view_recorded_stream.html', {'stream': stream})
+    else:
+        return HttpResponse("This stream does not have a recorded video.")
+    
+@login_required
+
+def get_stream_video(request, stream_id):
+    try:
+        stream = Streaming.objects.get(id=stream_id)
+        video_content = stream.video_file
+        response = HttpResponse(video_content, content_type='video/webm')
+        response['Content-Disposition'] = f'inline; filename="stream_video_{stream_id}.webm"'
+        return response
+    except Streaming.DoesNotExist:
+        raise Http404("Stream not found.")
