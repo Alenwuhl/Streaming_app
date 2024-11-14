@@ -1,0 +1,26 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+{% block title %}{{ stream.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-10 col-12" style="padding-top: 80px">
+            <!-- Título y Descripción -->
+            <h2 class="text-primary font-weight-bold mb-2 text-center">{{ stream.title }}</h2>
+            <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
+            <p class="text-muted mb-3 text-center">Recorded on: {{ stream.recorded_date|date:"F j, Y, g:i a" }}</p>
+            <!-- Contenedor del Video -->
+            <div class="d-flex justify-content-center align-items-start">
+                <!-- Sección de video grabado -->
+                <div class="video-container position-relative mb-4" style="width: 100%; max-width: 700px; background: linear-gradient(135deg, #d4e0f5, #a2b4dc); border-radius: 15px; padding: 15px;">
+                    <video id="recordedVideo" controls class="video-player shadow-lg" style="width: 100%; border-radius: 10px;">
+                        <source src="{% url 'get_stream_video' stream.id %}" type="video/webm">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

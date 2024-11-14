@@ -1,0 +1,35 @@
+{% extends 'base/layout.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% with container_class='mt-4' container_padding='1.5rem' %}
+
+{% block title %}Start Streaming{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="padding-top: 80px">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0" style="border-radius: 10px;">
+            <div class="card-header bg-primary text-white text-center" style="border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                <h3 class="mb-0">Start a New Streaming</h3>
+            </div>
+            <div class="card-body p-5" style="background-color: #f7f9fc;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        {{ form.title|as_crispy_field }}
+                    </div>
+                    <div class="form-group mb-4">
+                        {{ form.description|as_crispy_field }}
+                    </div>
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-success btn-lg px-5">
+                            <i class="fas fa-video"></i> Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% endwith %}
