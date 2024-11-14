@@ -1,0 +1,41 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+{% block title %}{{ stream.title }} - Viewer{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex justify-content-center align-items-center"
+     style="min-height: 100vh;"
+     data-stream-id="{{ stream.id }}"
+     data-is-host="false"
+     data-username="{{ username }}"
+     data-hostname="{{ hostname }}">
+
+  <div class="row justify-content-center w-100">
+    <div class="col-md-10 col-12">
+      <!-- Título y Descripción -->
+      <h2 class="text-primary font-weight-bold mb-2 text-center">{{ stream.title }}</h2>
+      <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
+
+      <!-- Video para el Viewer -->
+      <div class="video-container position-relative mb-4" style="width: 100%; max-width: 700px; background: #f0f2f5; border-radius: 15px; padding: 15px;">
+        <video id="remoteVideo" autoplay class="video-player shadow-lg" style="width: 100%; border-radius: 10px;"></video>
+      </div>
+
+      <!-- Contenedor de Chat -->
+      <div class="chat-container ml-4 d-none d-md-block" style="width: 30%;">
+        <h3 class="text-secondary">Live Chat</h3>
+        <div id="chat-log" class="chat-box" style="height: 300px; overflow-y: scroll; background-color: #fff; padding: 15px; border-radius: 10px;"></div>
+        <div class="chat-input d-flex align-items-center mt-3">
+          <input type="text" id="chat-message-input" placeholder="Type your message..." autocomplete="off" class="form-control">
+          <button id="chat-message-submit" class="btn btn-link ml-2"><i class="fas fa-paper-plane text-primary"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript para WebRTC y chat -->
+<script defer src="{% static 'js/webrtc_viewer.js' %}"></script>
+<script src="{% static 'chat/chat.js' %}"></script>
+<script defer src="{% static 'js/video_controls.js' %}"></script>
+{% endblock %}
