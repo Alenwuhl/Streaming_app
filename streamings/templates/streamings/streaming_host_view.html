@@ -1,60 +1,109 @@
-{% extends 'base/layout.html' %}
-{% load static %}
-{% block title %}{{ stream.title }} - Host{% endblock %}
+{% extends 'base/layout.html' %} {% load static %} {% block title %}{{
+stream.title }} - Host{% endblock %} {% block content %}
+<div
+  class="container-fluid d-flex justify-content-center align-items-center flex-column"
+  style="min-height: 100vh; overflow: hidden"
+  data-stream-id="{{ stream.id }}"
+  data-is-host="true"
+  data-username="{{ username }}"
+  data-hostname="{{ hostname }}"
+>
+  <!-- Título y Descripción -->
+  <h2 class="text-primary font-weight-bold mb-2 text-center">
+    {{ stream.title }}
+  </h2>
+  <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
 
-{% block content %}
-<div class="container-fluid d-flex justify-content-center align-items-center"
-     style="min-height: 100vh;"
-     data-stream-id="{{ stream.id }}"
-     data-is-host="true"
-     data-username="{{ username }}"
-     data-hostname="{{ hostname }}">
-
+  <!-- Contenedor Principal -->
   <div class="row justify-content-center w-100">
-    <div class="col-md-10 col-12">
-      <!-- Título y Descripción -->
-      <h2 class="text-primary font-weight-bold mb-2 text-center">{{ stream.title }}</h2>
-      <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
+    <!-- Indicador de carga del video -->
+    <div
+      id="uploadIndicator"
+      class="alert alert-info text-center"
+      style="display: none"
+    >
+      <strong>Uploading video...</strong> Please do not close the browser until
+      the upload is complete.
+    </div>
 
-      <!-- Video y Controles del Host -->
-      <div class="d-flex justify-content-center align-items-start">
-        <!-- Sección de video -->
-        <div class="video-container position-relative mb-4" style="width: 100%; max-width: 700px; background: #f0f2f5; border-radius: 15px; padding: 15px;">
-          <video id="localVideo" autoplay muted class="video-player shadow-lg" style="width: 100%; border-radius: 10px;"></video>
-        </div>
-
-        <!-- Contenedor de Chat -->
-        <div class="chat-container ml-4 d-none d-md-block" style="width: 30%;">
-          <h3 class="text-secondary">Live Chat</h3>
-          <div id="chat-log" class="chat-box" style="height: 300px; overflow-y: scroll; background-color: #fff; padding: 15px; border-radius: 10px;"></div>
-          <div class="chat-input d-flex align-items-center mt-3">
-            <input type="text" id="chat-message-input" placeholder="Type your message..." autocomplete="off" class="form-control">
-            <button id="chat-message-submit" class="btn btn-link ml-2"><i class="fas fa-paper-plane text-primary"></i></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Controles del Host -->
-      <div class="controls d-flex justify-content-center mt-3">
-        <button id="muteButton" class="btn btn-outline-primary mx-2"><i class="fas fa-volume-mute"></i></button>
-        <button id="startEndStreamingButton" class="btn btn-success mx-2" data-stream-id="{{ stream.id }}"><i class="fas fa-video"></i> Start Streaming</button>
-        <button id="fullscreenButton" class="btn btn-outline-secondary mx-2"><i class="fas fa-expand"></i></button>
+    <!-- Sección de Video -->
+    <div class="col-lg-8 col-md-10 mb-4">
+      <div
+        class="video-container mx-auto position-relative"
+        style="background: #f0f2f5; border-radius: 15px; padding: 0"
+      >
+        <video
+          id="localVideo"
+          autoplay
+          muted
+          class="video-player shadow-lg"
+          style="
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+          "
+        ></video>
       </div>
     </div>
+
+    <!-- Contenedor de Chat (Oculto en móviles) -->
+    <div class="col-lg-4 d-none d-lg-block">
+      <div class="chat-container">
+        <h3 class="text-secondary text-center">Live Chat</h3>
+        <div
+          id="chat-log"
+          class="chat-box"
+          style="
+            height: 400px;
+            overflow-y: auto;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+          "
+        ></div>
+        <div class="chat-input d-flex align-items-center mt-3">
+          <input
+            type="text"
+            id="chat-message-input"
+            placeholder="Type your message..."
+            autocomplete="off"
+            class="form-control"
+          />
+          <button id="chat-message-submit" class="btn btn-link ml-2">
+            <i class="fas fa-paper-plane text-primary"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles del Host -->
+  <div class="controls d-flex flex-wrap justify-content-center mt-3">
+    <button id="muteButton" class="btn btn-outline-primary btn-lg mx-2">
+      <i class="fas fa-volume-mute"></i>
+    </button>
+    <button
+      id="startEndStreamingButton"
+      class="btn btn-success btn-lg mx-2"
+      data-stream-id="{{ stream.id }}"
+    >
+      <i class="fas fa-video"></i> Start Streaming
+    </button>
+    <button id="fullscreenButton" class="btn btn-outline-secondary btn-lg mx-2">
+      <i class="fas fa-expand"></i>
+    </button>
   </div>
 </div>
 
 <!-- JavaScript para WebRTC, chat y controles -->
 <script defer src="{% static 'js/webrtc_host.js' %}"></script>
 <script>
-  // Definir variables globales para 'username' y 'streamId'
   const username = "{{ username }}";
   const streamId = "{{ stream.id }}";
-</script>
-<script src="{% static 'chat/chat.js' %}"></script>
-<script>
   const isHost = true;
 </script>
+<script defer src="{% static 'chat/chat.js' %}"></script>
 <script defer src="{% static 'js/video_controls.js' %}"></script>
 <script src="{% static 'js/stream_recorder.js' %}"></script>
 {% endblock %}

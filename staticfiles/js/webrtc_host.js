@@ -202,58 +202,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Finalizar stream en el backend
-  // Finalizar stream en el backend
-  // Finalizar stream en el backend
   async function endStreamLive(streamId) {
     streamId = streamId || document.body.getAttribute("data-stream-id");
 
     if (!streamId) {
-      console.error("[ERROR] Stream ID not found. Cannot end stream.");
-      return false;
+        console.error("[ERROR] Stream ID not found. Cannot end stream.");
+        return false;
     }
 
     const url = `/streamings/stream/end/${streamId}/`;
     console.log(`[DEBUG] Sending end stream request to: ${url}`);
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": getCSRFToken(),
-          "Content-Type": "application/json",
-        },
-      });
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": getCSRFToken(),
+                "Content-Type": "application/json",
+            },
+        });
 
-      // Verificar si la respuesta es JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error(
-          "[ERROR] Server response is not JSON. Possible HTML error page."
-        );
-        alert(
-          "An unexpected error occurred while ending the stream. Please try again."
-        );
-        window.location.href = "/streamings/";
-        return false;
-      }
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            console.error("[ERROR] Server response is not JSON. Possible HTML error page.");
+            alert("An unexpected error occurred while ending the stream. Please try again.");
+            window.location.href = "/streamings/";
+            return false;
+        }
 
-      const data = await response.json();
-      if (data.status === "success") {
-        console.log("[INFO] Stream has ended successfully.");
-        window.location.href = "/streamings/";
-        return true;
-      } else {
-        console.error("[ERROR] Failed to end stream:", data.message);
-        alert(
-          "Failed to end the stream. Please check the console for more details."
-        );
-        return false;
-      }
+        const data = await response.json();
+        if (data.status === "success" && data.hasEnded && !data.isLive) {
+            console.log("[INFO] Stream has ended successfully.");
+            window.location.href = "/streamings/";
+            return true;
+        } else {
+            console.error("[ERROR] Failed to end stream. State is inconsistent:", data);
+            alert("Failed to end the stream correctly. Please check the console for more details.");
+            return false;
+        }
     } catch (error) {
-      console.error("[ERROR] Error sending end stream request:", error);
-      alert("An error occurred while trying to end the stream.");
-      window.location.href = "/streamings/";
-      return false;
+        console.error("[ERROR] Error sending end stream request:", error);
+        alert("An error occurred while trying to end the stream.");
+        window.location.href = "/streamings/";
+        return false;
     }
-  }
+}
 });

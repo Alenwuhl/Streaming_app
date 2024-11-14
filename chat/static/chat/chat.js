@@ -1,18 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("[DEBUG] chat.js loaded");
 
-    const container = document.querySelector(".container-fluid");
+    const container = document.querySelector(".container-fluid.d-flex.align-items-center.flex-column");
+
+    if (!container) {
+        console.error("[ERROR] No se encontró el contenedor esperado.");
+        return;
+    }
+
     const username = window.username || container?.getAttribute("data-username");
     const streamId = window.streamId || container?.getAttribute("data-stream-id");
+
+
+    console.log(`[DEBUG] Username obtenido: ${username}`);
+    console.log(`[DEBUG] Stream ID obtenido: ${streamId}`);
     
     if (!username || !streamId) {
         console.error("[ERROR] No se pudieron obtener 'username' o 'stream-id' desde los atributos data-.");
         return;
     }
     
-    console.log(`[DEBUG] Username: ${username}, Stream ID: ${streamId}`);
-    
-
     console.log(`[DEBUG] Username: ${username}, Stream ID: ${streamId}`);
 
     const chatBox = document.getElementById('chat-log');

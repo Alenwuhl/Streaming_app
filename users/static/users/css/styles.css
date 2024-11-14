@@ -1,49 +1,85 @@
-/* Estilos generales */
+/* ================== General Styles ================== */
 body {
     font-family: 'Roboto', sans-serif;
     color: #333;
-    background: linear-gradient(135deg, #f0f4f8, #d9e3f0); /* Fondo gradiente para toda la página */
+    background: linear-gradient(135deg, #f0f4f8, #d9e3f0);
     overflow-x: hidden;
     max-width: 100vw;
+    animation: fadeIn 0.6s ease-in-out;
 }
 
-.container-fluid {
-    padding: 0;
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Navbar */
+#uploadIndicator {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 400px;
+  }  
+
+/* ================== Navbar ================== */
+#mainNavbar {
+    background: rgba(26, 26, 46, 0.8);
+    transition: background-color 0.3s ease;
+}
+
+#mainNavbar.scrolled-navbar {
+    background: rgba(26, 26, 46, 1);
+}
+
 .navbar-brand {
     font-size: 1.8rem;
 }
 
-.dropdown-item i {
-    margin-right: 8px;
+.glow-effect {
+    text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+    transition: all 0.3s ease;
 }
 
-/* Footer */
-footer a:hover {
-    color: #ff4081;
-    text-decoration: none;
+.glow-effect:hover {
+    text-shadow: 0 0 20px #00f0ff, 0 0 30px #00f0ff;
 }
 
-/* Estilos del Contenedor Principal */
+/* ================== Main Content ================== */
+.main-content {
+    min-height: 85vh;
+    margin-top: 80px;
+}
+
 .container {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
 }
 
-/* Estilos de la tarjeta de login */
+/* ================== Card Styles ================== */
 .card {
+    border-radius: 15px;
     background-color: #ffffff;
-    border: none;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
-.card h2 {
-    font-weight: bold;
-    color: #4a4a72;
+.card-header {
+    font-weight: 600;
 }
 
-/* Botones */
+.card-body {
+    background-color: #f7f9fc;
+}
+
+/* ================== Button Styles ================== */
 .btn-primary {
     background-color: #007bff;
     border: none;
@@ -54,158 +90,120 @@ footer a:hover {
     background-color: #0056b3;
 }
 
-a.text-primary:hover {
-    color: #003d80;
-    text-decoration: underline;
+.btn-success {
+    background-color: #28a745;
+    border: none;
 }
 
-/* Clase para páginas de pantalla completa (login, registro, etc.) */
-.full-screen {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.btn-success:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-lg {
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-lg:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+.a {
+    text-decoration: none;
+}
+
+/* ================== Form Styles ================== */
+.form-group input,
+.form-group textarea {
+    border-radius: 10px;
+    border: 1px solid #ced4da;
+    padding: 0.75rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+    border-color: #007bff;
+}
+
+/* ================== Video Styles ================== */
+.video-container {
+    max-width: 100%;
+    padding: 0;
+    background: #f0f2f5;
+    border-radius: 15px;
     overflow: hidden;
 }
 
-/* Ajustes Responsivos */
-@media (max-width: 768px) {
-    .navbar-brand {
-        font-size: 1.4rem;
-    }
+.video-player {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilos para la página de perfil */
-.profile-page .card {
+/* ================== Chat Styles ================== */
+.chat-container {
+    background: #f7f9fc;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
-.profile-page .display-4 {
-    font-size: 2rem;
-    color: #007bff;
-}
-
-.list-group-item {
-    border: none;
-    padding: 0.75rem 1.25rem;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    margin-bottom: 0.5rem;
-}
-
-.list-group-item:last-child {
-    margin-bottom: 0;
-}
-
-/* Estilo de lista de streamings */
-.list-group-item {
-    background-color: #ffffff;
-    border: none;
-    transition: transform 0.2s ease;
-}
-
-.list-group-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.text-primary.font-weight-bold {
-    color: #007bff !important;
-}
-
-.btn-outline-primary i {
-    margin-right: 5px;
-}
-
-/* Estilos de video */
-.video-player {
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Controles */
-.controls .btn {
-    transition: background-color 0.3s ease;
-}
-
-.controls .btn:hover {
-    transform: scale(1.1);
-}
-
-.controls .btn-outline-primary i, .btn-outline-secondary i {
-    margin-right: 5px;
-}
-
-/* Modo pantalla completa para el video */
-.fullscreen {
-    width: 100vw !important;
-    height: 100vh !important;
-}
-/* Fondo del video */
-.video-container {
-    background: linear-gradient(135deg, #d4e0f5, #a2b4dc);
-    border-radius: 15px;
+.chat-box {
+    height: 400px;
+    overflow-y: auto;
+    border-radius: 10px;
     padding: 15px;
 }
 
-/* Sombra y redondez del video */
-.video-player {
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Hide chat on mobile */
+@media (max-width: 767px) {
+    .chat-container {
+        display: none;
+    }
 }
 
-/* Controles */
-.controls .btn {
-    transition: background-color 0.3s ease;
-}
-
-.controls .btn:hover {
-    transform: scale(1.1);
-}
-
-.btn-outline-primary i, .btn-outline-secondary i {
-    margin-right: 5px;
-}
-
-/* Ajustes de Card */
-.card {
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-    font-weight: 600;
-}
-
-.btn-lg i {
-    margin-right: 8px;
-}
-
-/* Fondo de formulario */
-.card-body {
-    background-color: #f7f9fc;
-}
-/* Contenedor de pestañas */
+/* ================== Tabs ================== */
+/* Tab Container */
 .tab-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid #ddd; /* Línea horizontal debajo de las pestañas */
     margin-bottom: 20px;
     padding-bottom: 5px;
 }
 
+/* Tab Titles */
+.tab-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #6c757d;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    text-decoration: none; /* Quitar el subrayado de los enlaces */
+}
 
+.tab-title:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+}
 
-/* Pestaña activa */
-.tab-container a.active-tab {
-    color: #fff !important;
-    background-color: #007bff !important;
+/* Active Tab */
+.active-tab {
+    color: #fff;
+    background-color: #007bff;
     border-bottom: 3px solid transparent;
 }
 
-/* Separador entre pestañas */
+/* Separator between tabs */
 .separator {
     display: inline-block;
     width: 1px;
@@ -213,19 +211,53 @@ a.text-primary:hover {
     background-color: #ddd;
     margin: 0 15px;
 }
-/* Estilo para los títulos de pestañas */
-a.tab-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #6c757d !important; 
-    text-decoration: none !important;
-    padding: 10px 20px;
-    border-radius: 5px;
-    transition: all 0.3s ease;
+
+/* ================== List Group ================== */
+.list-group-item {
+    background-color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-a.tab-title:hover {
-    background-color: #e9ecef;
-    color: #007bff !important;
-    text-decoration: none;
+.list-group-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ================== Responsive Adjustments ================== */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.4rem;
+    }
+
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .tab-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card {
+        margin: 10px;
+    }
+
+    .input-group {
+        flex-direction: column;
+    }
+
+    .input-group .btn {
+        margin-top: 10px;
+    }
+}
+
+/* ================== Smooth Scrolling ================== */
+html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
 }

@@ -5,26 +5,34 @@
 
 {% block content %}
     <div class="d-flex justify-content-center align-items-center full-screen">
-        <div class="card shadow-lg p-3" style="max-width: 400px; width: 100%; border-radius: 8px;">
-            <h2 class="text-center text-primary mb-3">Join Us</h2>
+        <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%; border-radius: 15px;">
+            <!-- Título del formulario -->
+            <h2 class="text-center text-primary mb-4">Join Our Community!</h2>
+
+            <!-- Mensaje introductorio -->
+            <p class="text-muted text-center mb-4">Create an account to start streaming and connecting with others!</p>
+
+            <!-- Formulario de Registro -->
             <form method="post">
                 {% csrf_token %}
-                <div class="form-group mb-2">
+                <div class="form-group mb-3">
                     {{ form.username|as_crispy_field }}
                 </div>
-                <div class="form-group mb-2">
+                <div class="form-group mb-3">
                     {{ form.email|as_crispy_field }}
                 </div>
-                <div class="form-group mb-2">
+                <div class="form-group mb-3">
                     {{ form.password1|as_crispy_field }}
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group mb-4">
                     {{ form.password2|as_crispy_field }}
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Register</button>
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Register</button>
             </form>
-            <div class="text-center mt-2">
-                <small>Already have an account? <a href="{% url 'login' %}" class="text-primary">Login here</a></small>
+
+            <!-- Enlace al login -->
+            <div class="text-center mt-4">
+                <small>Already have an account? <a href="{% url 'login' %}" class="text-primary font-weight-bold">Login here</a></small>
             </div>
         </div>
     </div>

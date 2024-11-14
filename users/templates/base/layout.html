@@ -15,9 +15,9 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-lg" id="mainNavbar">
         <div class="container">
-            <a class="navbar-brand font-weight-bold text-light" href="/" style="font-size: 1.8rem;">
+            <a class="navbar-brand font-weight-bold text-light glow-effect" href="/" style="font-size: 1.8rem;">
                 <i class="fas fa-broadcast-tower text-primary"></i> StreamingApp
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,8 +62,8 @@
         </div>
     </nav>
 
-    <!-- Main content block with adjusted top margin to avoid overlap with fixed navbar -->
-    <div class="container-fluid px-3" style="min-height: 80vh; background: #f5f7fa; border-radius: 10px;">
+    <!-- Main content block with a smooth fade-in effect -->
+    <div class="container-fluid main-content px-3">
         {% block content %}
         {% endblock %}
     </div>
@@ -71,5 +71,15 @@
     <!-- Scripts for Bootstrap and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar color change on scroll
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 50) {
+                $('#mainNavbar').addClass('scrolled-navbar');
+            } else {
+                $('#mainNavbar').removeClass('scrolled-navbar');
+            }
+        });
+    </script>
 </body>
 </html>

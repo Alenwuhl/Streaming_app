@@ -46,21 +46,36 @@ def start_stream_live(request, stream_id):
 def end_stream(request, stream_id):
     if request.method == "POST":
         try:
-            # Lógica para finalizar el stream
             stream = Streaming.objects.get(id=stream_id)
+            # Verificar el estado antes de actualizar
+            print(f"Estado inicial del stream ID={stream_id}: is_live={stream.is_live}, has_ended={stream.has_ended}")
+
+            # Actualizar ambos campos
             stream.has_ended = True
+            stream.is_live = False
             stream.save()
-            return JsonResponse({"status": "success"})
+
+            # Verificar el estado después de actualizar
+            print(f"Estado actualizado del stream ID={stream_id}: is_live={stream.is_live}, has_ended={stream.has_ended}")
+
+            return JsonResponse({
+                "status": "success",
+                "hasEnded": stream.has_ended,
+                "isLive": stream.is_live
+            })
+        except Streaming.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Stream not found."})
         except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
-    return JsonResponse({"status": "error", "message": "Invalid request method."}, status=400)
+            return JsonResponse({"status": "error", "message": str(e)})
+    return JsonResponse({"status": "error", "message": "Method not allowed."})
 
 
 @login_required
 def stream_list(request):
     print("Accediendo a la vista 'stream_list'.")
     current_user = request.user
-    streams = Streaming.objects.filter(is_live=True)
+    # Filtrar streams que están en vivo y no han terminado
+    streams = Streaming.objects.filter(is_live=True, has_ended=False)
     following_filter = request.GET.get('following') == 'true'
 
     if following_filter:
@@ -75,11 +90,11 @@ def stream_list(request):
     if query:
         user_results = CustomUser.objects.filter(username__icontains=query)
         for user in user_results:
-            has_active_stream = user.streams.filter(is_live=True).exists()
+            has_active_stream = user.streams.filter(is_live=True, has_ended=False).exists()
             user_data.append({
                 'user': user,
                 'has_active_stream': has_active_stream,
-                'active_stream': user.streams.filter(is_live=True).first() if has_active_stream else None
+                'active_stream': user.streams.filter(is_live=True, has_ended=False).first() if has_active_stream else None
             })
         no_user_found = not user_data
         print(f"Búsqueda realizada: query='{query}', resultados={len(user_results)}.")
@@ -98,7 +113,6 @@ def stream_list(request):
         'no_user_found': no_user_found,
     }
     return render(request, 'streamings/stream_list.html', context)
-
 
 @login_required
 def streaming_host_view(request, stream_id):
