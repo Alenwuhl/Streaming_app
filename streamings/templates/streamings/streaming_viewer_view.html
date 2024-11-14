@@ -1,41 +1,121 @@
-{% extends 'base/layout.html' %}
-{% load static %}
-{% block title %}{{ stream.title }} - Viewer{% endblock %}
+{% extends 'base/layout.html' %} {% load static %} {% block title %}{{
+stream.title }} - Viewer{% endblock %} {% block content %}
+<div
+  class="container-fluid d-flex flex-column align-items-center"
+  style="min-height: 100vh; padding-top: 80px"
+  data-stream-id="{{ stream.id }}"
+  data-is-host="false"
+  data-username="{{ username }}"
+  data-hostname="{{ hostname }}"
+>
+  <!-- Título y Descripción -->
+  <h2 class="text-primary font-weight-bold mb-2 text-center">
+    {{ stream.title }}
+  </h2>
+  <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
 
-{% block content %}
-<div class="container-fluid d-flex justify-content-center align-items-center"
-     style="min-height: 100vh;"
-     data-stream-id="{{ stream.id }}"
-     data-is-host="false"
-     data-username="{{ username }}"
-     data-hostname="{{ hostname }}">
-
-  <div class="row justify-content-center w-100">
-    <div class="col-md-10 col-12">
-      <!-- Título y Descripción -->
-      <h2 class="text-primary font-weight-bold mb-2 text-center">{{ stream.title }}</h2>
-      <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
-
-      <!-- Video para el Viewer -->
-      <div class="video-container position-relative mb-4" style="width: 100%; max-width: 700px; background: #f0f2f5; border-radius: 15px; padding: 15px;">
-        <video id="remoteVideo" autoplay class="video-player shadow-lg" style="width: 100%; border-radius: 10px;"></video>
+  <div class="row w-100 d-flex justify-content-center">
+    <!-- Contenedor de Video -->
+    <div class="col-lg-8 col-md-10 mb-4">
+      <div
+        class="video-container position-relative"
+        style="background: #f0f2f5; border-radius: 15px; padding: 15px"
+      >
+        <video
+          id="remoteVideo"
+          autoplay
+          class="video-player shadow-lg"
+          style="width: 100%; border-radius: 10px"
+        ></video>
       </div>
+    </div>
 
-      <!-- Contenedor de Chat -->
-      <div class="chat-container ml-4 d-none d-md-block" style="width: 30%;">
-        <h3 class="text-secondary">Live Chat</h3>
-        <div id="chat-log" class="chat-box" style="height: 300px; overflow-y: scroll; background-color: #fff; padding: 15px; border-radius: 10px;"></div>
+    <!-- Contenedor de Chat (Colapsable en Móviles) -->
+    <div class="col-lg-4 col-md-10 mb-4">
+      <div class="chat-container">
+        <h3 class="text-secondary text-center">Live Chat</h3>
+        <div
+          id="chat-log"
+          class="chat-box"
+          style="
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+          "
+        ></div>
         <div class="chat-input d-flex align-items-center mt-3">
-          <input type="text" id="chat-message-input" placeholder="Type your message..." autocomplete="off" class="form-control">
-          <button id="chat-message-submit" class="btn btn-link ml-2"><i class="fas fa-paper-plane text-primary"></i></button>
+          <input
+            type="text"
+            id="chat-message-input"
+            placeholder="Type your message..."
+            autocomplete="off"
+            class="form-control"
+          />
+          <button id="chat-message-submit" class="btn btn-link ml-2">
+            <i class="fas fa-paper-plane text-primary"></i>
+          </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Botón para Mostrar/Ocultar Chat en Móviles -->
+  <button id="toggleChatButton" class="btn btn-outline-primary d-lg-none mt-3">
+    <i class="fas fa-comments"></i> Show Chat
+  </button>
+
+  <!-- Contenedor de Chat en Móviles (Oculto por Defecto) -->
+  <div id="mobileChatContainer" class="d-lg-none" style="display: none">
+    <div
+      id="chat-log-mobile"
+      class="chat-box"
+      style="
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 10px;
+      "
+    ></div>
+    <div class="chat-input d-flex align-items-center mt-3">
+      <input
+        type="text"
+        id="chat-message-input-mobile"
+        placeholder="Type your message..."
+        autocomplete="off"
+        class="form-control"
+      />
+      <button id="chat-message-submit-mobile" class="btn btn-link ml-2">
+        <i class="fas fa-paper-plane text-primary"></i>
+      </button>
     </div>
   </div>
 </div>
 
 <!-- JavaScript para WebRTC y chat -->
 <script defer src="{% static 'js/webrtc_viewer.js' %}"></script>
-<script src="{% static 'chat/chat.js' %}"></script>
+<script>
+  const username = "{{ username }}";
+  const streamId = "{{ stream.id }}";
+  const isHost = true;
+</script>
+<script defer src="{% static 'chat/chat.js' %}"></script>
 <script defer src="{% static 'js/video_controls.js' %}"></script>
+<script>
+  // Mostrar/Ocultar Chat en Móviles
+  document.getElementById("toggleChatButton").addEventListener("click", () => {
+    const chatContainer = document.getElementById("mobileChatContainer");
+    if (chatContainer.style.display === "none") {
+      chatContainer.style.display = "block";
+      document.getElementById("toggleChatButton").innerHTML =
+        '<i class="fas fa-comments"></i> Hide Chat';
+    } else {
+      chatContainer.style.display = "none";
+      document.getElementById("toggleChatButton").innerHTML =
+        '<i class="fas fa-comments"></i> Show Chat';
+    }
+  });
+</script>
 {% endblock %}

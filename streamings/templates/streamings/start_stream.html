@@ -1,29 +1,32 @@
 {% extends 'base/layout.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
-{% with container_class='mt-4' container_padding='1.5rem' %}
-
 {% block title %}Start Streaming{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center" style="padding-top: 80px">
-    <div class="col-md-8">
-        <div class="card shadow-sm border-0" style="border-radius: 10px;">
-            <div class="card-header bg-primary text-white text-center" style="border-top-left-radius: 10px; border-top-right-radius: 10px;">
-                <h3 class="mb-0">Start a New Streaming</h3>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh; padding: 20px;">
+    <div class="col-lg-6 col-md-8 col-sm-10">
+        <div class="card shadow border-0" style="border-radius: 15px; background: linear-gradient(135deg, #e2ebf0, #cfd8e3);">
+            <div class="card-header bg-primary text-white text-center" style="border-radius: 15px 15px 0 0;">
+                <h3 class="mb-0"><i class="fas fa-video text-warning"></i> Start a New Streaming</h3>
             </div>
-            <div class="card-body p-5" style="background-color: #f7f9fc;">
+            <div class="card-body p-4" style="background-color: #f7f9fc; border-radius: 0 0 15px 15px;">
                 <form method="post">
                     {% csrf_token %}
+                    <!-- Campo para el título del stream -->
                     <div class="form-group mb-4">
                         {{ form.title|as_crispy_field }}
                     </div>
+
+                    <!-- Campo para la descripción del stream -->
                     <div class="form-group mb-4">
                         {{ form.description|as_crispy_field }}
                     </div>
+
+                    <!-- Botón para continuar -->
                     <div class="form-group text-center">
-                        <button type="submit" class="btn btn-success btn-lg px-5">
-                            <i class="fas fa-video"></i> Continue
+                        <button type="submit" class="btn btn-success btn-lg px-5 shadow-lg" style="border-radius: 50px; transition: all 0.3s ease;">
+                            <i class="fas fa-arrow-right"></i> Continue
                         </button>
                     </div>
                 </form>
@@ -32,4 +35,3 @@
     </div>
 </div>
 {% endblock %}
-{% endwith %}

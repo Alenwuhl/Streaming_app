@@ -4,21 +4,29 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh; overflow: hidden;">
-        <div class="card shadow-lg p-3" style="max-width: 400px; width: 100%; border-radius: 8px;">
-            <h2 class="text-center text-primary mb-3">Welcome Back!</h2>
+    <div class="d-flex justify-content-center align-items-center full-screen">
+        <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%; border-radius: 15px;">
+            <!-- Título del formulario -->
+            <h2 class="text-center text-primary mb-4">Welcome Back!</h2>
+
+            <!-- Mensaje de bienvenida opcional -->
+            <p class="text-muted text-center mb-4">Log in to access your account and start streaming!</p>
+
+            <!-- Formulario de Login -->
             <form method="post">
                 {% csrf_token %}
-                <div class="form-group mb-2">
+                <div class="form-group mb-3">
                     {{ form.username|as_crispy_field }}
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group mb-4">
                     {{ form.password|as_crispy_field }}
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Login</button>
             </form>
-            <div class="text-center mt-2">
-                <small>Don't have an account? <a href="{% url 'register' %}" class="text-primary">Register here</a></small>
+
+            <!-- Links adicionales -->
+            <div class="text-center mt-4">
+                <small class="text-muted">Don't have an account? <a href="{% url 'register' %}" class="text-primary font-weight-bold">Register here</a></small>
             </div>
         </div>
     </div>

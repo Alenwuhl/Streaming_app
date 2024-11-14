@@ -4,51 +4,62 @@
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-    <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh">
-        <div class="card shadow-lg p-4" style="width: 100%; max-width: 600px; border-radius: 10px;">
-            <div class="text-center">
-                <h2 class="text-primary">{{ profile_user.username }}'s Profile</h2>
-                {% if request.user == profile_user %}
-                    <div class="d-flex justify-content-around mt-4">
-                        <div>
-                            <h5 class="text-secondary">Followers</h5>
-                            <p class="display-4 text-primary">{{ followers_count }}</p>
-                        </div>
-                        <div>
-                            <h5 class="text-secondary">Following</h5>
-                            <p class="display-4 text-primary">{{ following_count }}</p>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="follow-button mt-3">
-                        {% if is_following %}
-                            <form method="POST" action="{% url 'unfollow_user' profile_user.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-block">Unfollow</button>
-                            </form>
-                        {% else %}
-                            <form method="POST" action="{% url 'follow_user' profile_user.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary btn-block">Follow</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <h3 class="text-center text-secondary mt-4">Recent Streams</h3>
-            <ul class="list-group mt-3">
-                {% if recent_streams %}
-                    {% for stream in recent_streams %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="{% url 'view_recorded_stream' stream.id %}">{{ stream.title }}</a>
-                            <small class="text-muted">{{ stream.start_time|date:"M d, Y H:i" }}</small>
-                        </li>
-                    {% endfor %}
-                {% else %}
-                    <li class="list-group-item text-center text-muted">No recent streams available.</li>
-                {% endif %}
-            </ul>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 85vh; padding: 20px;">
+    <div class="card shadow-lg p-4 w-100" id='card-profile' style="max-width: 700px; border-radius: 15px;">
+        <!-- Título del Perfil -->
+        <div class="text-center mb-4">
+            <h2 class="text-primary">{{ profile_user.username }}'s Profile</h2>
         </div>
+
+        <!-- Información de Seguidores y Seguidos -->
+        <div class="d-flex justify-content-around mb-4">
+            <div class="text-center">
+                <h5 class="text-secondary">Followers</h5>
+                <p class="display-4 text-primary">{{ followers_count }}</p>
+            </div>
+            <div class="text-center">
+                <h5 class="text-secondary">Following</h5>
+                <p class="display-4 text-primary">{{ following_count }}</p>
+            </div>
+        </div>
+
+        <!-- Botón de Follow/Unfollow -->
+        {% if request.user != profile_user %}
+        <div class="text-center mb-4">
+            {% if is_following %}
+                <form method="POST" action="{% url 'unfollow_user' profile_user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-lg px-4 shadow-sm" style="border-radius: 50px;">
+                        <i class="fas fa-user-minus"></i> Unfollow
+                    </button>
+                </form>
+            {% else %}
+                <form method="POST" action="{% url 'follow_user' profile_user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg px-4 shadow-sm" style="border-radius: 50px;">
+                        <i class="fas fa-user-plus"></i> Follow
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Streams Recientes -->
+        <h3 class="text-center text-secondary mb-3">Recent Streams</h3>
+        <ul class="list-group mb-4">
+            {% if recent_streams %}
+                {% for stream in recent_streams %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" style="border-radius: 10px;">
+                        <a href="{% url 'view_recorded_stream' stream.id %}" class="text-primary font-weight-bold" style="text-decoration: none;">
+                            <i class="fas fa-play-circle"></i> {{ stream.title }}
+                        </a>
+                        <small class="text-muted">{{ stream.start_time|date:"M d, Y H:i" }}</small>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li class="list-group-item text-center text-muted" style="border-radius: 10px;">No recent streams available.</li>
+            {% endif %}
+        </ul>
     </div>
+</div>
 {% endblock %}
