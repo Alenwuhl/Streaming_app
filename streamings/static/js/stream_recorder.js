@@ -13,52 +13,73 @@ function getCSRFToken() {
 
 // Inicializa la captura de video
 async function initializeLocalStream() {
+  console.log("[DEBUG] Attempting to initialize local stream...");
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
     });
-    console.log("[INFO] Local stream initialized:", localStream);
+    console.log("[INFO] Local stream initialized successfully:", localStream);
     document.getElementById("localVideo").srcObject = localStream;
   } catch (error) {
-    console.error("[ERROR] Error initializing local stream:", error);
+    console.error("[ERROR] Failed to initialize local stream:", error);
     alert("Could not access camera and microphone. Please check permissions.");
   }
 }
 
 // Verifica si localStream está inicializado y es un MediaStream antes de grabar
 function startRecording(stream) {
+  console.log("[DEBUG] Checking if stream is valid...");
   if (!(stream instanceof MediaStream)) {
-    console.error("[ERROR] startRecording: stream is not a MediaStream.");
+    console.error("[ERROR] startRecording: Invalid stream object:", stream);
     return;
   }
 
-  recordedChunks = [];
+  console.log("[INFO] Starting MediaRecorder...");
   try {
     mediaRecorder = new MediaRecorder(stream, {
       mimeType: "video/webm; codecs=vp9",
     });
 
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) recordedChunks.push(event.data);
-      console.log("[INFO] Data chunk recorded:", event.data.size);
-    };
+    mediaRecorder.ondataavailable = async (event) => {
+      console.log("[DEBUG] Chunk available. Size:", event.data.size);
+      if (event.data.size > 0) {
+        const formData = new FormData();
+        formData.append("video_chunk", event.data);
+        formData.append("chunk_index", recordedChunks.length.toString());
+        recordedChunks.push(event.data);
 
-    mediaRecorder.onstop = async () => {
-      const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
-      console.log("[INFO] Blob size onstop:", videoBlob.size);
-      await uploadVideoToServer(videoBlob, streamId);
-
-      // Finalizar stream en el servidor
-      await endStreamOnServer(streamId);
+        try {
+          const response = await fetch(
+            `/streamings/upload_chunk/${streamId}/`,
+            {
+              method: "POST",
+              headers: {
+                "X-CSRFToken": getCSRFToken(),
+              },
+              body: formData,
+            }
+          );
+          if (response.ok) {
+            console.log("[INFO] Video chunk uploaded successfully.");
+          } else {
+            console.error(
+              "[ERROR] Failed to upload chunk:",
+              response.statusText
+            );
+          }
+        } catch (error) {
+          console.error("[ERROR] Network error while uploading chunk:", error);
+        }
+      }
     };
 
     mediaRecorder.start();
-    console.log("[INFO] Recording started...");
+    console.log("[INFO] Recording started successfully.");
     isRecording = true;
     updateRecordingButton();
   } catch (error) {
-    console.error("[ERROR] Failed to initialize MediaRecorder:", error);
+    console.error("[ERROR] MediaRecorder initialization failed:", error);
   }
 }
 
@@ -144,25 +165,54 @@ document
   });
 
 // Detiene la grabación y envía el archivo de video al servidor
+
 async function stopRecordingAndSave(streamId) {
-  console.log("[INFO] Enter to stopRecordingAndSave");
+  console.log("[INFO] Stopping recording...");
   if (!mediaRecorder || !isRecording) {
-    console.warn("[WARNING] MediaRecorder not initialized or not recording.");
+    console.warn("[WARNING] MediaRecorder is not recording.");
     return;
   }
 
   mediaRecorder.stop();
-  isRecording = false;
-  updateRecordingButton();
+  console.log("[INFO] MediaRecorder stopped.");
+
+  try {
+    console.log("[INFO] Notifying server to finalize stream...");
+    const response = await fetch(`/streamings/finalize_stream/${streamId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken, 
+      },
+    });
+
+    const data = await response.json();
+    if (data.status === "success") {
+      console.log("[INFO] Stream finalized successfully.");
+      alert(
+        "The stream has ended. Processing the recording in the background."
+      );
+      window.location.href = "/streamings/";
+    } else {
+      console.error("[ERROR] Server failed to finalize stream:", data.message);
+    }
+  } catch (error) {
+    console.error("[ERROR] Error finalizing stream on server:", error);
+  }
 }
 
 // Función para enviar el archivo de video al servidor
+
 async function uploadVideoToServer(videoBlob, streamId) {
+  console.log("[DEBUG] Preparing to upload video blob...");
+  console.log("[DEBUG] Blob size:", videoBlob.size);
+
   const formData = new FormData();
-  formData.append("video", videoBlob);
+  formData.append("video_chunk", videoBlob);
+  formData.append("chunk_index", 0);
 
   try {
-    console.log("[INFO] Uploading video to server...");
+    console.log("[INFO] Sending chunk to server...");
     const response = await fetch(`/streamings/save_video/${streamId}/`, {
       method: "POST",
       headers: {
@@ -172,12 +222,12 @@ async function uploadVideoToServer(videoBlob, streamId) {
     });
 
     if (response.ok) {
-      console.log("[INFO] Video uploaded successfully.");
+      console.log("[INFO] Video chunk uploaded successfully.");
     } else {
-      console.error("[ERROR] Error uploading video:", response.statusText);
+      console.error("[ERROR] Server responded with status:", response.status);
     }
   } catch (error) {
-    console.error("[ERROR] Upload error:", error);
+    console.error("[ERROR] Failed to upload video chunk:", error);
   }
 }
 
@@ -221,4 +271,22 @@ async function endStreamOnServer(streamId) {
   }
 }
 
-//version4
+async function checkVideoAvailability(streamId) {
+  try {
+    const response = await fetch(`/streamings/check_video/${streamId}/`, {
+      method: "GET",
+    });
+
+    const data = await response.json();
+    if (data.status === "available") {
+      console.log("[INFO] Video is ready for playback.");
+      window.location.href = `/streamings/view_recorded_stream/${streamId}/`;
+    } else {
+      console.log("[INFO] Video is still processing.");
+      alert("The recording is still being processed. Please check back later.");
+    }
+  } catch (error) {
+    console.error("[ERROR] Failed to check video availability:", error);
+  }
+}
+//version 5
