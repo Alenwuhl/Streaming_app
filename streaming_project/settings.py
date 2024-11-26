@@ -149,3 +149,19 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+import os
+from pathlib import Path
+
+MEDIA_ROOT = Path(BASE_DIR) / "media"
+MEDIA_URL = "/media/"
+MEDIA_TEMP_STREAMS = MEDIA_ROOT / "temp_streams"
+
+# Crear los directorios si no existen
+MEDIA_TEMP_STREAMS.mkdir(parents=True, exist_ok=True)
+
+
+# Configuración de Celery
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"

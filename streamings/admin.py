@@ -3,4 +3,4 @@ from .models import Streaming
 
 @admin.register(Streaming)
 class StreamingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'description', 'host', 'is_live', 'has_ended', 'video_file', 'recorded_date')
+    list_display = ('id', 'title', 'description', 'host', 'is_live', 'has_ended', 'recorded_date')
