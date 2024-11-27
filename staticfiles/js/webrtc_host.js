@@ -19,34 +19,41 @@ document.addEventListener("DOMContentLoaded", () => {
   let peerConnection = null;
   let pendingICECandidates = [];
   let isStreaming = false;
+  let isScreenSharing = false;
+  let localStream = null;
+  let screenStream = null;
+  let screenSender = null;
+
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
 
-  // Inicializar el stream local
+  const localVideo = document.getElementById("localVideo");
+  const sharedScreen = document.getElementById("sharedScreen");
+  const videoContainer = document.querySelector(".video-container");
+
   async function initializeLocalStream() {
     try {
       console.log("[INFO] Accessing local media...");
-      const localStream = await navigator.mediaDevices.getUserMedia({
+      localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
-      document.getElementById("localVideo").srcObject = localStream;
+      localVideo.srcObject = localStream;
+      localVideo.classList.add("video-large");
       return localStream;
     } catch (error) {
       console.error("[ERROR] Error accessing media devices:", error);
-      alert(
-        "Could not access camera and microphone. Please check permissions."
-      );
+      alert("Could not access camera and microphone. Please check permissions.");
       return null;
     }
   }
 
   websocket.onopen = async () => {
     console.log("[INFO] WebSocket is connected as Host.");
-    const localStream = await initializeLocalStream();
-    if (localStream) {
-      createPeerConnection(localStream);
+    const stream = await initializeLocalStream();
+    if (stream) {
+      createPeerConnection(stream);
     } else {
       console.error("[ERROR] Local stream initialization failed.");
     }
@@ -100,15 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function addIceCandidate(candidate) {
     try {
-      if (
-        !peerConnection.remoteDescription ||
-        peerConnection.signalingState !== "stable"
-      ) {
-        pendingICECandidates.push(candidate);
-        return;
-      }
       await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-      console.log("[DEBUG] ICE candidate added successfully.");
+      console.log("[INFO] ICE candidate added.");
     } catch (error) {
       console.error("[ERROR] Error adding ICE candidate:", error);
     }
@@ -144,108 +144,117 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Botón para iniciar/finalizar el streaming
-  const startEndButton = document.getElementById("startEndStreamingButton");
-
-  if (startEndButton) {
-    startEndButton.addEventListener("click", async () => {
-      startEndButton.disabled = true; // Deshabilitar el botón temporalmente
-      const streamId = startEndButton.getAttribute("data-stream-id");
-
-      if (!isStreaming) {
-        const result = await startStreamLive(streamId);
-        if (result) {
-          isStreaming = true;
-          updateButtonState();
-        }
+  const screenShareButton = document.getElementById("shareScreenButton");
+  if (screenShareButton) {
+    screenShareButton.addEventListener("click", async () => {
+      if (isScreenSharing) {
+        stopScreenShare();
+        updateButtonState(screenShareButton, false);
       } else {
-        const result = await endStreamLive(streamId);
-        if (result) {
-          isStreaming = false;
-          updateButtonState();
+        const success = await startScreenShare();
+        if (success) {
+          updateButtonState(screenShareButton, true);
         }
       }
-
-      startEndButton.disabled = false; // Rehabilitar el botón
     });
+  } else {
+    console.error("[ERROR] Share Screen button not found.");
   }
 
-  function updateButtonState() {
-    if (isStreaming) {
-      startEndButton.classList.replace("btn-success", "btn-danger");
-      startEndButton.innerHTML = '<i class="fas fa-video"></i> End Streaming';
-    } else {
-      startEndButton.classList.replace("btn-danger", "btn-success");
-      startEndButton.innerHTML = '<i class="fas fa-video"></i> Start Streaming';
-    }
-  }
-
-  async function startStreamLive(streamId) {
+  async function startScreenShare() {
     try {
-      const response = await fetch(
-        `/streamings/stream/start_live/${streamId}/`,
-        {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": getCSRFToken(),
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      console.log("[INFO] Attempting to start screen sharing...");
+      screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      });
 
-      const data = await response.json();
-      return data.status === "success";
+      if (!screenStream) {
+        console.error("[ERROR] Screen stream is null or undefined.");
+        alert("Failed to capture screen. Please try again.");
+        return false;
+      }
+
+      const screenTrack = screenStream.getVideoTracks()[0];
+      console.log("[INFO] Screen sharing started. Track:", screenTrack);
+
+      screenSender = peerConnection.addTrack(screenTrack, screenStream);
+
+      // Set shared screen source
+      sharedScreen.srcObject = screenStream;
+      sharedScreen.classList.remove("d-none");
+
+      // Swap videos in the DOM
+      swapVideos(sharedScreen, localVideo);
+
+      screenTrack.onended = () => {
+        console.log("[INFO] Screen sharing stopped by user.");
+        stopScreenShare();
+      };
+
+      websocket.send(JSON.stringify({ type: "screen-sharing", data: true }));
+      isScreenSharing = true;
+      return true;
     } catch (error) {
-      console.error("[ERROR] Error starting stream:", error);
+      console.error("[ERROR] Failed to share screen:", error);
+      alert("Could not start screen sharing. Please check permissions.");
       return false;
     }
   }
 
-  // Finalizar stream en el backend
-  async function endStreamLive(streamId) {
-    streamId = streamId || document.body.getAttribute("data-stream-id");
+  function stopScreenShare() {
+    console.log("[INFO] Stopping screen sharing...");
 
-    if (!streamId) {
-        console.error("[ERROR] Stream ID not found. Cannot end stream.");
-        return false;
+    if (screenSender) {
+      peerConnection.removeTrack(screenSender);
+      screenSender = null;
     }
 
-    const url = `/streamings/stream/end/${streamId}/`;
-    console.log(`[DEBUG] Sending end stream request to: ${url}`);
-
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": getCSRFToken(),
-                "Content-Type": "application/json",
-            },
-        });
-
-        // Verificar si la respuesta es JSON
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            console.error("[ERROR] Server response is not JSON. Possible HTML error page.");
-            alert("An unexpected error occurred while ending the stream. Please try again.");
-            window.location.href = "/streamings/";
-            return false;
-        }
-
-        const data = await response.json();
-        if (data.status === "success" && data.hasEnded && !data.isLive) {
-            console.log("[INFO] Stream has ended successfully.");
-            window.location.href = "/streamings/";
-            return true;
-        } else {
-            console.error("[ERROR] Failed to end stream. State is inconsistent:", data);
-            alert("Failed to end the stream correctly. Please check the console for more details.");
-            return false;
-        }
-    } catch (error) {
-        console.error("[ERROR] Error sending end stream request:", error);
-        alert("An error occurred while trying to end the stream.");
-        window.location.href = "/streamings/";
-        return false;
+    if (screenStream) {
+      screenStream.getTracks().forEach((track) => track.stop());
+      screenStream = null;
     }
-}
+
+    sharedScreen.classList.add("d-none");
+    sharedScreen.srcObject = null;
+
+    // Revert videos in the DOM
+    swapVideos(localVideo, sharedScreen);
+
+    websocket.send(JSON.stringify({ type: "screen-sharing", data: false }));
+    isScreenSharing = false;
+    console.log("[INFO] Screen sharing stopped.");
+  }
+
+  function swapVideos(mainVideo, smallVideo) {
+    if (!mainVideo || !smallVideo || !videoContainer) {
+      console.error("[ERROR] Videos or container not found.");
+      return;
+    }
+
+    console.log("[DEBUG] Swapping videos in the DOM...");
+
+    if (mainVideo.parentNode === videoContainer) {
+      videoContainer.insertBefore(smallVideo, mainVideo);
+    } else {
+      videoContainer.appendChild(mainVideo);
+    }
+
+    // mainVideo.classList.add("video-large");
+    // mainVideo.classList.remove("video-small");
+
+    // smallVideo.classList.add("video-small");
+    // smallVideo.classList.remove("video-large");
+  }
+
+  function updateButtonState(button, isActive) {
+    if (!button) return;
+
+    if (isActive) {
+      button.classList.replace("btn-outline-warning", "btn-warning");
+      button.innerHTML = '<i class="fas fa-stop"></i> Stop Sharing';
+    } else {
+      button.classList.replace("btn-warning", "btn-outline-warning");
+      button.innerHTML = '<i class="fas fa-desktop"></i> Share Screen';
+    }
+  }
 });

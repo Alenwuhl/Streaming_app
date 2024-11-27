@@ -1,5 +1,7 @@
-{% extends 'base/layout.html' %} {% load static %} {% block title %}{{
-stream.title }} - Host{% endblock %} {% block content %}
+{% extends 'base/layout.html' %}
+{% load static %}
+{% block title %}{{ stream.title }} - Host{% endblock %}
+{% block content %}
 <div
   class="container-fluid d-flex justify-content-center align-items-center flex-column"
   style="min-height: 100vh; overflow: hidden"
@@ -9,9 +11,7 @@ stream.title }} - Host{% endblock %} {% block content %}
   data-hostname="{{ hostname }}"
 >
   <!-- Título y Descripción -->
-  <h2 class="text-primary font-weight-bold mb-2 text-center">
-    {{ stream.title }}
-  </h2>
+  <h2 class="text-primary font-weight-bold mb-2 text-center">{{ stream.title }}</h2>
   <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
 
   <!-- Contenedor Principal -->
@@ -22,27 +22,25 @@ stream.title }} - Host{% endblock %} {% block content %}
       class="alert alert-info text-center"
       style="display: none"
     >
-      <strong>Uploading video...</strong> Please do not close the browser until
-      the upload is complete.
+      <strong>Uploading video...</strong> Please do not close the browser until the upload is complete.
     </div>
 
-    <!-- Sección de Video -->
+    <!-- Sección de Video y Pantalla Compartida -->
     <div class="col-lg-8 col-md-10 mb-4">
-      <div
-        class="video-container mx-auto position-relative"
-        style="background: #f0f2f5; border-radius: 15px; padding: 0"
-      >
+      <div class="video-container mx-auto position-relative">
+        <!-- Video Principal -->
         <video
           id="localVideo"
           autoplay
           muted
-          class="video-player shadow-lg"
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 15px;
-          "
+          class="video-player video-large shadow-lg"
+        ></video>
+        <!-- Pantalla Compartida -->
+        <video
+          id="sharedScreen"
+          autoplay
+          muted
+          class="shared-screen video-small d-none"
         ></video>
       </div>
     </div>
@@ -51,17 +49,7 @@ stream.title }} - Host{% endblock %} {% block content %}
     <div class="col-lg-4 d-none d-lg-block">
       <div class="chat-container">
         <h3 class="text-secondary text-center">Live Chat</h3>
-        <div
-          id="chat-log"
-          class="chat-box"
-          style="
-            height: 400px;
-            overflow-y: auto;
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 10px;
-          "
-        ></div>
+        <div id="chat-log" class="chat-box"></div>
         <div class="chat-input d-flex align-items-center mt-3">
           <input
             type="text"
@@ -92,6 +80,9 @@ stream.title }} - Host{% endblock %} {% block content %}
     </button>
     <button id="fullscreenButton" class="btn btn-outline-secondary btn-lg mx-2">
       <i class="fas fa-expand"></i>
+    </button>
+    <button id="shareScreenButton" class="btn btn-outline-warning btn-lg mx-2">
+      <i class="fas fa-desktop"></i> Share Screen
     </button>
   </div>
 </div>
