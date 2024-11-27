@@ -168,33 +168,73 @@ document
 
 async function stopRecordingAndSave(streamId) {
   console.log("[INFO] Stopping recording...");
+
+  // Verificar que streamId es válido
+  if (!streamId) {
+    console.error("[ERROR] streamId is invalid or undefined.");
+    alert("Stream ID is missing. Unable to finalize the stream.");
+    return;
+  }
+
   if (!mediaRecorder || !isRecording) {
     console.warn("[WARNING] MediaRecorder is not recording.");
     return;
   }
 
+  // Detener la grabación
   mediaRecorder.stop();
   console.log("[INFO] MediaRecorder stopped.");
 
   try {
     console.log("[INFO] Notifying server to finalize stream...");
-    const response = await fetch(`/streamings/finalize_stream/${streamId}/`, {
+
+    // Recuperar el token CSRF y verificar que es válido
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+      console.error("[ERROR] CSRF token is missing or invalid.");
+      alert("CSRF token is missing. Please try again.");
+      return;
+    }
+
+    // Hacer la solicitud al servidor
+    const response = await fetch(`/streamings/stream/end/${streamId}/`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCSRFToken(),
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken, // Asegurarse de llamar a la función
       },
     });
 
+    // Verificar que la respuesta del servidor es válida
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error(
+        "[ERROR] Server response is not JSON. Possible HTML error page."
+      );
+      alert(
+        "An unexpected error occurred while ending the stream. Redirecting to the main page."
+      );
+      window.location.href = "/streamings/";
+      return;
+    }
+
     const data = await response.json();
     if (data.status === "success") {
-      console.log("[INFO] Stream finalized successfully.");
-      alert("The stream has ended. Processing the recording in the background.");
+      console.log("[INFO] Stream ended successfully on server.");
+      alert(
+        "The stream has ended. Processing the recording in the background."
+      );
       window.location.href = "/streamings/";
     } else {
-      console.error("[ERROR] Server failed to finalize stream:", data.message);
+      console.error("[ERROR] Failed to end stream on server:", data.message);
+      alert("Failed to end the stream on the server.");
     }
   } catch (error) {
-    console.error("[ERROR] Error finalizing stream on server:", error);
+    console.error("[ERROR] Error ending stream on server:", error);
+    alert(
+      "An error occurred while ending the stream. Redirecting to the main page."
+    );
+    window.location.href = "/streamings/";
   }
 }
 
@@ -229,21 +269,23 @@ async function uploadVideoToServer(videoBlob, streamId) {
 }
 
 // Finaliza el stream en el servidor
+// Finaliza el stream en el servidor
 async function endStreamOnServer(streamId) {
   try {
+    console.log(`[INFO] Ending stream with ID: ${streamId}`);
+
     const response = await fetch(`/streamings/stream/end/${streamId}/`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCSRFToken(),
+        "X-CSRFToken": getCSRFToken(), // Corrección: Ejecutar la función
         "Content-Type": "application/json",
       },
     });
 
+    // Verificar si la respuesta tiene el encabezado correcto
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      console.error(
-        "[ERROR] Server response is not JSON. Possible HTML error page."
-      );
+      console.error("[ERROR] Server response is not JSON.");
       alert(
         "An unexpected error occurred while ending the stream. Redirecting to the main page."
       );
@@ -251,9 +293,11 @@ async function endStreamOnServer(streamId) {
       return;
     }
 
+    // Intentar parsear la respuesta como JSON
     const data = await response.json();
     if (data.status === "success") {
       console.log("[INFO] Stream ended successfully on server.");
+      alert("Stream ended successfully. Redirecting to the main page.");
       window.location.href = "/streamings/";
     } else {
       console.error("[ERROR] Failed to end stream on server:", data.message);
@@ -265,25 +309,6 @@ async function endStreamOnServer(streamId) {
       "An error occurred while ending the stream. Redirecting to the main page."
     );
     window.location.href = "/streamings/";
-  }
-}
-
-async function checkVideoAvailability(streamId) {
-  try {
-    const response = await fetch(`/streamings/check_video/${streamId}/`, {
-      method: "GET",
-    });
-
-    const data = await response.json();
-    if (data.status === "available") {
-      console.log("[INFO] Video is ready for playback.");
-      window.location.href = `/streamings/view_recorded_stream/${streamId}/`;
-    } else {
-      console.log("[INFO] Video is still processing.");
-      alert("The recording is still being processed. Please check back later.");
-    }
-  } catch (error) {
-    console.error("[ERROR] Failed to check video availability:", error);
   }
 }
 //version 5
