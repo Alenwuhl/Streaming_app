@@ -1,3 +1,4 @@
+// webrtc_viewer.js
 document.addEventListener("DOMContentLoaded", () => {
   console.log("[INFO] Initializing WebRTC for Viewer...");
 
@@ -23,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
 
+  const hostVideo = document.getElementById("hostVideo");
+  const sharedScreen = document.getElementById("sharedScreen");
+
   websocket.onopen = () => {
     console.log("[INFO] WebSocket is connected as Viewer.");
     websocket.send(JSON.stringify({ type: "ready" }));
@@ -38,15 +42,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (message.type === "ice" && peerConnection) {
       console.log("[DEBUG] Received ICE candidate.");
       await addIceCandidate(message.data);
-    } else if (message.type === "screen_share_started") {
-      console.log("[INFO] Screen sharing started notification received.");
-      adjustScreenShareView(true);
-    } else if (message.type === "screen_share_stopped") {
-      console.log("[INFO] Screen sharing stopped notification received.");
-      adjustScreenShareView(false);
+    } else if (message.type === "screen-sharing") {
+      console.log("[INFO] Screen sharing state changed:", message.data);
+      adjustScreenShareView(message.data);
     }
   };
 
+  /**
+   * Configure PeerConnection for the viewer
+   * @param {RTCSessionDescriptionInit} offer
+   */
   async function setupViewerPeerConnection(offer) {
     try {
       console.log("[INFO] Creating viewer peer connection.");
@@ -70,13 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // Asignar las pistas de video adecuadas
-        if (!hostVideo.srcObject && event.track.kind === "video") {
-          hostVideo.srcObject = event.streams[0];
-          console.log("[INFO] Host video track assigned.");
-        } else if (!sharedScreen.srcObject && event.track.kind === "video") {
-          sharedScreen.srcObject = event.streams[0];
-          console.log("[INFO] Screen sharing track assigned.");
+        // Asignar las pistas al video correcto
+        if (event.track.kind === "video") {
+          if (!sharedScreen.srcObject) {
+            sharedScreen.srcObject = event.streams[0];
+            console.log("[INFO] Screen sharing track assigned.");
+          } else if (!hostVideo.srcObject) {
+            hostVideo.srcObject = event.streams[0];
+            console.log("[INFO] Host video track assigned.");
+          }
         }
       };
 
@@ -95,6 +102,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Handle remote track events from the host
+   * @param {RTCTrackEvent} event
+   */
+  function handleRemoteTrack(event) {
+    if (event.track.kind === "video") {
+      if (!hostVideo.srcObject) {
+        console.log("[INFO] Assigning host video stream.");
+        hostVideo.srcObject = event.streams[0];
+      } else if (!sharedScreen.srcObject) {
+        console.log("[INFO] Assigning screen sharing stream.");
+        sharedScreen.srcObject = event.streams[0];
+      } else {
+        console.warn("[WARNING] Extra video track received. Ignoring.");
+      }
+    }
+  }
+
+  /**
+   * Add ICE candidate
+   * @param {RTCIceCandidateInit} candidate
+   */
   async function addIceCandidate(candidate) {
     try {
       await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
@@ -104,18 +133,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Alternar entre videos grandes y pequeños
-  const hostVideo = document.getElementById("hostVideo");
-  const sharedScreen = document.getElementById("sharedScreen");
+  /**
+   * Adjust the view based on screen sharing state
+   * @param {boolean} isScreenSharingActive
+   */
+  function adjustScreenShareView(isScreenSharingActive) {
+    const hostVideo = document.getElementById("hostVideo");
+    const sharedScreen = document.getElementById("sharedScreen");
 
-  hostVideo.addEventListener("click", () => {
-    switchVideoSizes(sharedScreen, hostVideo);
-  });
+    if (!hostVideo || !sharedScreen) {
+      console.error("[ERROR] Video elements not found in the DOM.");
+      return;
+    }
 
-  sharedScreen.addEventListener("click", () => {
-    switchVideoSizes(hostVideo, sharedScreen);
-  });
+    if (isScreenSharingActive) {
+      console.log("[INFO] Switching to screen sharing view.");
+      switchVideoSizes(sharedScreen, hostVideo);
+      hostVideo.classList.add("d-none");
+      sharedScreen.classList.remove("d-none");
+    } else {
+      console.log("[INFO] Returning to host video view.");
+      switchVideoSizes(hostVideo, sharedScreen);
+      sharedScreen.classList.add("d-none");
+      hostVideo.classList.remove("d-none");
+    }
+  }
 
+  /**
+   * Switch the sizes of the main video and small video
+   * @param {HTMLElement} mainVideo - The main video element
+   * @param {HTMLElement} smallVideo - The small video element
+   */
   function switchVideoSizes(mainVideo, smallVideo) {
     if (!mainVideo || !smallVideo) return;
 
@@ -125,24 +173,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     smallVideo.classList.add("video-small");
     smallVideo.classList.remove("video-large");
-  }
-
-  function adjustScreenShareView(isScreenSharingActive) {
-    const hostVideoContainer = document.getElementById("hostVideo");
-    const sharedScreenContainer = document.getElementById("sharedScreen");
-
-    if (!hostVideoContainer || !sharedScreenContainer) {
-      console.error("[ERROR] Video containers not found in the DOM.");
-      return;
-    }
-
-    if (isScreenSharingActive) {
-      console.log("[INFO] Adjusting view for screen sharing.");
-      switchVideoSizes(sharedScreenContainer, hostVideoContainer);
-    } else {
-      console.log("[INFO] Adjusting view to show only host video.");
-      switchVideoSizes(hostVideoContainer, sharedScreenContainer);
-      sharedScreenContainer.srcObject = null;
-    }
   }
 });

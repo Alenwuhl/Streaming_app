@@ -1,4 +1,3 @@
-// webrtc_host.js
 document.addEventListener("DOMContentLoaded", () => {
   console.log("[INFO] Initializing WebRTC for Host...");
 
@@ -18,11 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let peerConnection = null;
   let pendingICECandidates = [];
-  let isStreaming = false;
-  let isScreenSharing = false;
   let localStream = null;
   let screenStream = null;
   let screenSender = null;
+  let isScreenSharing = false;
 
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -32,6 +30,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const sharedScreen = document.getElementById("sharedScreen");
   const videoContainer = document.querySelector(".video-container");
 
+  // Button elements
+  const screenShareButton = document.getElementById("shareScreenButton");
+
+  sharedScreen.addEventListener("click", () => {
+    if (isScreenSharing) {
+      console.log("[INFO] Shared screen clicked. Swapping with local video.");
+      swapVideos(sharedScreen, localVideo);
+    }
+  });
+
+  localVideo.addEventListener("click", () => {
+    if (isScreenSharing) {
+      console.log("[INFO] Local video clicked. Swapping with shared screen.");
+      swapVideos(localVideo, sharedScreen);
+    }
+  });
+
+  /**
+   * Initialize local media stream
+   */
+  /**
+   * Initialize local media stream
+   */
   async function initializeLocalStream() {
     try {
       console.log("[INFO] Accessing local media...");
@@ -39,12 +60,25 @@ document.addEventListener("DOMContentLoaded", () => {
         video: true,
         audio: true,
       });
-      localVideo.srcObject = localStream;
-      localVideo.classList.add("video-large");
+
+      if (!isScreenSharing) {
+        // Solo asignar al localVideo si no se está compartiendo pantalla
+        localVideo.srcObject = localStream;
+        localVideo.classList.add("video-large");
+      } else {
+        localVideo.srcObject = localStream;
+        localVideo.classList.add("video-small");
+        console.warn(
+          "[WARNING] Screen sharing is active. Skipping local video assignment."
+        );
+      }
+
       return localStream;
     } catch (error) {
       console.error("[ERROR] Error accessing media devices:", error);
-      alert("Could not access camera and microphone. Please check permissions.");
+      alert(
+        "Could not access camera and microphone. Please check permissions."
+      );
       return null;
     }
   }
@@ -88,6 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cleanupPeerConnection();
   };
 
+  /**
+   * Set the remote answer from the viewer
+   * @param {RTCSessionDescriptionInit} answer
+   */
   async function setRemoteAnswer(answer) {
     try {
       console.log("[INFO] Setting remote answer.");
@@ -105,6 +143,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Add ICE candidate
+   * @param {RTCIceCandidateInit} candidate
+   */
   async function addIceCandidate(candidate) {
     try {
       await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
@@ -114,6 +156,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Create a PeerConnection and handle local stream tracks
+   * @param {MediaStream} localStream
+   */
   function createPeerConnection(localStream) {
     peerConnection = new RTCPeerConnection(configuration);
 
@@ -134,6 +180,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  /**
+   * Start streaming by creating an offer
+   */
   async function startStreaming() {
     try {
       const offer = await peerConnection.createOffer();
@@ -144,23 +193,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const screenShareButton = document.getElementById("shareScreenButton");
-  if (screenShareButton) {
-    screenShareButton.addEventListener("click", async () => {
-      if (isScreenSharing) {
-        stopScreenShare();
-        updateButtonState(screenShareButton, false);
-      } else {
-        const success = await startScreenShare();
-        if (success) {
-          updateButtonState(screenShareButton, true);
-        }
-      }
-    });
-  } else {
-    console.error("[ERROR] Share Screen button not found.");
-  }
-
+  /**
+   * Start screen sharing
+   */
   async function startScreenShare() {
     try {
       console.log("[INFO] Attempting to start screen sharing...");
@@ -177,15 +212,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const screenTrack = screenStream.getVideoTracks()[0];
       console.log("[INFO] Screen sharing started. Track:", screenTrack);
 
+      // Add screen track to PeerConnection
       screenSender = peerConnection.addTrack(screenTrack, screenStream);
 
-      // Set shared screen source
+      // Set shared screen source and update UI
       sharedScreen.srcObject = screenStream;
       sharedScreen.classList.remove("d-none");
 
-      // Swap videos in the DOM
-      swapVideos(sharedScreen, localVideo);
+      // Swap shared screen to main position
+      // swapVideos(sharedScreen, localVideo);
 
+      // Handle when screen sharing stops
       screenTrack.onended = () => {
         console.log("[INFO] Screen sharing stopped by user.");
         stopScreenShare();
@@ -201,6 +238,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Stop screen sharing
+   */
   function stopScreenShare() {
     console.log("[INFO] Stopping screen sharing...");
 
@@ -214,10 +254,11 @@ document.addEventListener("DOMContentLoaded", () => {
       screenStream = null;
     }
 
+    // Hide shared screen and revert to camera
     sharedScreen.classList.add("d-none");
     sharedScreen.srcObject = null;
 
-    // Revert videos in the DOM
+    // Swap back to local video as main
     swapVideos(localVideo, sharedScreen);
 
     websocket.send(JSON.stringify({ type: "screen-sharing", data: false }));
@@ -225,6 +266,11 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("[INFO] Screen sharing stopped.");
   }
 
+  /**
+   * Swap the sizes and positions of the main video and small video
+   * @param {HTMLElement} mainVideo - The main video element (to be enlarged)
+   * @param {HTMLElement} smallVideo - The small video element (to be minimized)
+   */
   function swapVideos(mainVideo, smallVideo) {
     if (!mainVideo || !smallVideo || !videoContainer) {
       console.error("[ERROR] Videos or container not found.");
@@ -233,19 +279,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("[DEBUG] Swapping videos in the DOM...");
 
-    if (mainVideo.parentNode === videoContainer) {
-      videoContainer.insertBefore(smallVideo, mainVideo);
-    } else {
-      videoContainer.appendChild(mainVideo);
-    }
+    // Actualizar las clases de los videos
+    mainVideo.classList.remove("video-small");
+    mainVideo.classList.add("video-large");
 
-    // mainVideo.classList.add("video-large");
-    // mainVideo.classList.remove("video-small");
+    smallVideo.classList.remove("video-large");
+    smallVideo.classList.add("video-small");
 
-    // smallVideo.classList.add("video-small");
-    // smallVideo.classList.remove("video-large");
+    console.log("[DEBUG] Main Video Classes after swap:", mainVideo.classList);
+    console.log("[DEBUG] Small Video Classes after swap:", smallVideo.classList);
+
+    // Reasignar estilos para mantener posiciones visuales
+    mainVideo.style.zIndex = "2"; // Asegurar que esté al frente
+    smallVideo.style.zIndex = "1"; // Asegurar que esté detrás
+
+    console.log("[INFO] Video swap completed successfully.");
   }
 
+  /**
+   * Initialize the screen share button functionality
+   */
+  if (screenShareButton) {
+    screenShareButton.addEventListener("click", async () => {
+      if (isScreenSharing) {
+        stopScreenShare();
+        updateButtonState(screenShareButton, false);
+      } else {
+        const success = await startScreenShare();
+        if (success) {
+          updateButtonState(screenShareButton, true);
+        }
+      }
+    });
+  } else {
+    console.error("[ERROR] Share Screen button not found.");
+  }
+
+  /**
+   * Update button state for screen sharing
+   * @param {HTMLElement} button
+   * @param {boolean} isActive
+   */
   function updateButtonState(button, isActive) {
     if (!button) return;
 
