@@ -20,9 +20,8 @@ class StreamingConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message_type = text_data_json.get('type', None)
-        data = text_data_json.get('data', None)
 
-        print(f"[DEBUG] Mensaje recibido: type={message_type}, data={data}")
+        print(f"[DEBUG] Mensaje recibido: {text_data_json}")
 
         if message_type == 'ready':
             # Notificar al host que el viewer está listo
@@ -30,7 +29,7 @@ class StreamingConsumer(AsyncWebsocketConsumer):
                 self.group_name,
                 {
                     'type': 'viewer_ready',
-                    'data': data,
+                    'data': text_data_json.get('data', None),
                 }
             )
         elif message_type == 'offer':
@@ -39,7 +38,7 @@ class StreamingConsumer(AsyncWebsocketConsumer):
                 self.group_name,
                 {
                     'type': 'send_offer',
-                    'data': data,
+                    'data': text_data_json.get('data', None),
                 }
             )
         elif message_type == 'answer':
@@ -48,7 +47,7 @@ class StreamingConsumer(AsyncWebsocketConsumer):
                 self.group_name,
                 {
                     'type': 'send_answer',
-                    'data': data,
+                    'data': text_data_json.get('data', None),
                 }
             )
         elif message_type == 'ice':
@@ -57,7 +56,29 @@ class StreamingConsumer(AsyncWebsocketConsumer):
                 self.group_name,
                 {
                     'type': 'send_ice_candidate',
-                    'data': data,
+                    'data': text_data_json.get('data', None),
+                }
+            )
+        elif message_type == 'start_survey':
+            question = text_data_json.get('question', '').strip()
+            options = text_data_json.get('options', [])
+
+            if not question or not options or any(opt.strip() == '' for opt in options):
+                print(f"[ERROR] Encuesta inválida recibida. Pregunta: {question}, Opciones: {options}")
+                return
+
+            print(f"[DEBUG] Encuesta recibida. Pregunta: {question}, Opciones: {options}")
+
+            # Formatear opciones para los clientes
+            formatted_options = [{'text': option, 'votes': 0} for option in options]
+
+            # Enviar encuesta a los clientes conectados
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    'type': 'survey_message',
+                    'question': question,
+                    'options': [option['text'] for option in formatted_options],  # Solo enviar los textos
                 }
             )
 
@@ -91,4 +112,13 @@ class StreamingConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'ice',
             'data': data
+        }))
+
+    async def survey_message(self, event):
+        print(f"[DEBUG] Difundiendo encuesta: {event}")
+        await self.send(text_data=json.dumps({
+            'type': 'survey_start',
+            'question': event['question'],
+            # Ajuste: Solo enviar el texto de las opciones
+            'options': event['options'],
         }))

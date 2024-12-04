@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("[INFO] Received offer, setting up viewer connection.");
       await setupViewerPeerConnection(message.data);
     } else if (message.type === "ice" && peerConnection) {
-      console.log("[DEBUG] Received ICE candidate.");
+      console.log("[DEBUG] Viewer received ICE candidate.");
       await addIceCandidate(message.data);
     } else if (message.type === "screen-sharing") {
       console.log("[INFO] Screen sharing state changed:", message.data);
@@ -67,23 +67,24 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       peerConnection.ontrack = (event) => {
-        const hostVideo = document.getElementById("hostVideo");
-        const sharedScreen = document.getElementById("sharedScreen");
+        console.log("[DEBUG] Viewer received track:", event.track);
+        console.log("[DEBUG] Viewer streams:", event.streams);
 
-        if (!hostVideo || !sharedScreen) {
-          console.error("[ERROR] Video elements not found in the DOM.");
+        const [stream] = event.streams;
+        const hostVideo = document.getElementById("hostVideo");
+
+        if (!hostVideo) {
+          console.error("[ERROR] Host video element not found in the DOM.");
           return;
         }
 
-        // Asignar las pistas al video correcto
-        if (event.track.kind === "video") {
-          if (!sharedScreen.srcObject) {
-            sharedScreen.srcObject = event.streams[0];
-            console.log("[INFO] Screen sharing track assigned.");
-          } else if (!hostVideo.srcObject) {
-            hostVideo.srcObject = event.streams[0];
-            console.log("[INFO] Host video track assigned.");
-          }
+        if (!hostVideo.srcObject) {
+          console.log("[INFO] Assigning received stream to hostVideo.");
+          hostVideo.srcObject = stream;
+        } else {
+          console.warn(
+            "[WARNING] Stream already assigned to hostVideo. Ignoring."
+          );
         }
       };
 

@@ -11,6 +11,7 @@ urlpatterns = [
     path('streamings/', include('streamings.urls')),
     path('accounts/login/', lambda request: redirect('/users/login/')),
     path('chat/', include('chat.urls')), 
+    path('surveys/', include('surveys.urls')),
 ]
 
 if settings.DEBUG:
