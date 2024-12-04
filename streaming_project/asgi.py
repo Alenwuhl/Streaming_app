@@ -9,12 +9,14 @@ django.setup()
 
 from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns
 from streamings.routing import websocket_urlpatterns as streamings_websocket_urlpatterns
+from surveys.routing import websocket_urlpatterns as surveys_websocket_urlpatterns
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
-            chat_websocket_urlpatterns + streamings_websocket_urlpatterns
+            chat_websocket_urlpatterns + streamings_websocket_urlpatterns + surveys_websocket_urlpatterns
         )
     ),
 })
+

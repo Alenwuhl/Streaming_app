@@ -2,6 +2,7 @@
 {% load static %}
 {% block title %}{{ stream.title }} - Host{% endblock %}
 {% block content %}
+{% include "surveys/modal.html" %}
 <div
   class="container-fluid d-flex justify-content-center align-items-center flex-column"
   style="min-height: 100vh; overflow: hidden"
@@ -11,20 +12,13 @@
   data-hostname="{{ hostname }}"
 >
   <!-- Título y Descripción -->
-  <h2 class="text-primary font-weight-bold mb-2 text-center">{{ stream.title }}</h2>
+  <h2 class="text-primary font-weight-bold mb-2 text-center">
+    {{ stream.title }}
+  </h2>
   <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
 
   <!-- Contenedor Principal -->
   <div class="row justify-content-center w-100">
-    <!-- Indicador de carga del video -->
-    <div
-      id="uploadIndicator"
-      class="alert alert-info text-center"
-      style="display: none"
-    >
-      <strong>Uploading video...</strong> Please do not close the browser until the upload is complete.
-    </div>
-
     <!-- Sección de Video y Pantalla Compartida -->
     <div class="col-lg-8 col-md-10 mb-4">
       <div class="video-container mx-auto position-relative">
@@ -45,12 +39,26 @@
       </div>
     </div>
 
-    <!-- Contenedor de Chat (Oculto en móviles) -->
+    <!-- Contenedor de Chat y Encuesta -->
     <div class="col-lg-4 d-none d-lg-block">
-      <div class="chat-container">
-        <h3 class="text-secondary text-center">Live Chat</h3>
-        <div id="chat-log" class="chat-box"></div>
-        <div class="chat-input d-flex align-items-center mt-3">
+      <!-- Encuesta Activa -->
+      <div id="active-survey" class="card d-none mb-3">
+        <div class="card-body">
+          <h5 id="survey-question" class="card-title text-center"></h5>
+          <div id="survey-options" class="options-list"></div>
+          <button id="end-survey-btn" class="btn btn-danger mt-2 d-none">
+            End Survey
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat en Vivo -->
+      <div class="chat-container card">
+        <div class="card-header text-secondary text-center">
+          <h5>Live Chat</h5>
+        </div>
+        <div id="chat-log" class="chat-box card-body"></div>
+        <div class="chat-input d-flex align-items-center mt-2 px-3">
           <input
             type="text"
             id="chat-message-input"
@@ -64,30 +72,44 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Controles del Host -->
-  <div class="controls d-flex flex-wrap justify-content-center mt-3">
-    <button id="muteButton" class="btn btn-outline-primary btn-lg mx-2">
-      <i class="fas fa-volume-mute"></i>
-    </button>
-    <button
-      id="startEndStreamingButton"
-      class="btn btn-success btn-lg mx-2"
-      data-stream-id="{{ stream.id }}"
-    >
-      <i class="fas fa-video"></i> Start Streaming
-    </button>
-    <button id="fullscreenButton" class="btn btn-outline-secondary btn-lg mx-2">
-      <i class="fas fa-expand"></i>
-    </button>
-    <button id="shareScreenButton" class="btn btn-outline-warning btn-lg mx-2">
-      <i class="fas fa-desktop"></i> Share Screen
-    </button>
+    <!-- Controles del Host -->
+    <div class="controls d-flex flex-wrap justify-content-center mt-3">
+      <button id="muteButton" class="btn btn-outline-primary btn-lg mx-2">
+        <i class="fas fa-volume-mute"></i>
+      </button>
+      <button
+        id="startEndStreamingButton"
+        class="btn btn-success btn-lg mx-2"
+        data-stream-id="{{ stream.id }}"
+      >
+        <i class="fas fa-video"></i> Start Streaming
+      </button>
+      <button
+        id="fullscreenButton"
+        class="btn btn-outline-secondary btn-lg mx-2"
+      >
+        <i class="fas fa-expand"></i>
+      </button>
+      <button
+        id="shareScreenButton"
+        class="btn btn-outline-warning btn-lg mx-2"
+      >
+        <i class="fas fa-desktop"></i> Share Screen
+      </button>
+      <button
+        id="startSurveyButton"
+        class="btn btn-outline-info btn-lg mx-2"
+        data-toggle="modal"
+        data-target="#surveyModal"
+      >
+        <i class="fas fa-poll"></i> Start Survey
+      </button>
+    </div>
   </div>
 </div>
 
-<!-- JavaScript para WebRTC, chat y controles -->
+<!-- JavaScript -->
 <script defer src="{% static 'js/webrtc_host.js' %}"></script>
 <script>
   const username = "{{ username }}";
@@ -96,5 +118,6 @@
 </script>
 <script defer src="{% static 'chat/chat.js' %}"></script>
 <script defer src="{% static 'js/video_controls.js' %}"></script>
-<script src="{% static 'js/stream_recorder.js' %}"></script>
+<script defer src="{% static 'js/stream_recorder.js' %}"></script>
+<script defer src="{% static 'surveys/js/surveys.js' %}"></script>
 {% endblock %}

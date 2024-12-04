@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("[INFO] Received answer from viewer.");
       await setRemoteAnswer(message.data);
     } else if (message.type === "ice") {
-      console.log("[DEBUG] Received ICE candidate from viewer.");
+      console.log("[DEBUG] Host received ICE candidate from viewer.");
       if (peerConnection && peerConnection.remoteDescription) {
         await addIceCandidate(message.data);
       } else {
@@ -165,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     localStream.getTracks().forEach((track) => {
       peerConnection.addTrack(track, localStream);
+      console.log(`[DEBUG] Host added track: ${track.kind}, ID: ${track.id}`);
     });
 
     peerConnection.onicecandidate = (event) => {
@@ -287,7 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
     smallVideo.classList.add("video-small");
 
     console.log("[DEBUG] Main Video Classes after swap:", mainVideo.classList);
-    console.log("[DEBUG] Small Video Classes after swap:", smallVideo.classList);
+    console.log(
+      "[DEBUG] Small Video Classes after swap:",
+      smallVideo.classList
+    );
 
     // Reasignar estilos para mantener posiciones visuales
     mainVideo.style.zIndex = "2"; // Asegurar que esté al frente

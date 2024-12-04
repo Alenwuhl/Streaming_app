@@ -1,7 +1,6 @@
 {% extends 'base/layout.html' %}
 {% load static %}
 {% block title %}{{ stream.title }} - Viewer{% endblock %}
-
 {% block content %}
 <div
   class="container-fluid d-flex flex-column align-items-center"
@@ -25,23 +24,36 @@
         <video
           id="hostVideo"
           autoplay
+          playsinline
           class="video-player video-large shadow-lg"
         ></video>
         <!-- Pantalla compartida -->
         <video
           id="sharedScreen"
           autoplay
+          playsinline
           class="shared-screen video-small d-none"
         ></video>
       </div>
     </div>
 
-    <!-- Contenedor de Chat (Colapsable en Móviles) -->
+    <!-- Contenedor de Chat y Encuesta -->
     <div class="col-lg-4 col-md-10 mb-4">
-      <div class="chat-container">
-        <h3 class="text-secondary text-center">Live Chat</h3>
-        <div id="chat-log" class="chat-box"></div>
-        <div class="chat-input d-flex align-items-center mt-3">
+      <!-- Encuesta Activa -->
+      <div id="active-survey" class="card d-none mb-3">
+        <div class="card-body">
+          <h5 id="survey-question" class="card-title text-center"></h5>
+          <div id="survey-options" class="options-list"></div>
+        </div>
+      </div>
+
+      <!-- Chat en Vivo -->
+      <div class="card chat-container">
+        <div class="card-header text-secondary text-center">
+          <h5>Live Chat</h5>
+        </div>
+        <div id="chat-log" class="chat-box card-body"></div>
+        <div class="chat-input d-flex align-items-center mt-2 px-3">
           <input
             type="text"
             id="chat-message-input"
@@ -63,9 +75,12 @@
   </button>
 
   <!-- Contenedor de Chat en Móviles (Oculto por Defecto) -->
-  <div id="mobileChatContainer" class="d-lg-none" style="display: none">
-    <div id="chat-log-mobile" class="chat-box"></div>
-    <div class="chat-input d-flex align-items-center mt-3">
+  <div id="mobileChatContainer" class="card d-lg-none mt-3" style="display: none">
+    <div class="card-header text-secondary text-center">
+      <h5>Live Chat</h5>
+    </div>
+    <div id="chat-log-mobile" class="chat-box card-body"></div>
+    <div class="chat-input d-flex align-items-center mt-2 px-3">
       <input
         type="text"
         id="chat-message-input-mobile"
@@ -89,6 +104,7 @@
 </script>
 <script defer src="{% static 'chat/chat.js' %}"></script>
 <script defer src="{% static 'js/video_controls.js' %}"></script>
+<script defer src="{% static 'surveys/js/viewer_surveys.js' %}" defer></script>
 <script>
   // Mostrar/Ocultar Chat en Móviles
   document.getElementById("toggleChatButton").addEventListener("click", () => {
