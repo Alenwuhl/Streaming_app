@@ -15,7 +15,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from .tasks import process_video
-from celery import shared_task
+
 
 
 @login_required
@@ -59,40 +59,6 @@ def start_stream_live(request, stream_id):
         f"No se pudo iniciar el stream ID={stream_id}. El stream ya está en vivo o ha terminado."
     )
     return JsonResponse({"status": "error", "message": "Unable to start the stream."})
-
-
-@login_required
-def end_stream(request, stream_id):
-    if request.method == "POST":
-        try:
-            stream = Streaming.objects.get(id=stream_id)
-            # Verificar el estado antes de actualizar
-            print(
-                f"Estado inicial del stream ID={stream_id}: is_live={stream.is_live}, has_ended={stream.has_ended}"
-            )
-
-            # Actualizar ambos campos
-            stream.has_ended = True
-            stream.is_live = False
-            stream.save()
-
-            # Verificar el estado después de actualizar
-            print(
-                f"Estado actualizado del stream ID={stream_id}: is_live={stream.is_live}, has_ended={stream.has_ended}"
-            )
-
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "hasEnded": stream.has_ended,
-                    "isLive": stream.is_live,
-                }
-            )
-        except Streaming.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "Stream not found."})
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)})
-    return JsonResponse({"status": "error", "message": "Method not allowed."})
 
 
 @login_required
@@ -218,7 +184,14 @@ def view_recorded_stream(request, stream_id):
     if not stream.video_file:
         return render(request, "streamings/waiting.html", {"stream_id": stream_id})
 
+    recorded_file = Path(settings.MEDIA_ROOT) / str(stream.video_file)
+
+    if not recorded_file.exists():
+        print(f"[ERROR] El archivo grabado no existe: {recorded_file}")
+        return render(request, "streamings/waiting.html", {"stream_id": stream_id})
+
     return render(request, "streamings/view_recorded_stream.html", {"stream": stream})
+
 
 
 @login_required
@@ -269,8 +242,11 @@ def finalize_stream(request, stream_id):
     stream.is_live = False
     stream.has_ended = True
     stream.save()
+    
+    print("####### EL STREAM SE HA FINALIZADO #######")
 
     # Lanzar la tarea en segundo plano
+    print(f"[DEBUG] Invocando process_video con stream_id={stream_id}")
     process_video.delay(stream_id)
 
     return JsonResponse({"status": "success", "message": "Stream finalized and video is being processed."})
@@ -337,52 +313,6 @@ def save_video(request, stream_id):
     return JsonResponse(
         {"status": "success", "message": "Video chunk saved successfully"}
     )
-
-
-@shared_task
-def process_video(stream_id):
-    print(f"[INFO] Procesando el video para el stream ID={stream_id}.")
-    stream_temp_dir = Path(settings.MEDIA_TEMP_STREAMS) / str(stream_id)
-    recorded_dir = Path(settings.MEDIA_ROOT) / "recorded_streams"
-    recorded_dir.mkdir(parents=True, exist_ok=True)
-
-    file_list_path = stream_temp_dir / "file_list.txt"
-    output_file = recorded_dir / f"{stream_id}.webm"
-
-    # Crear el archivo file_list.txt con los fragmentos
-    with open(file_list_path, "w") as file_list:
-        for chunk_file in sorted(stream_temp_dir.glob("chunk_*.webm")):
-            file_list.write(f"file '{chunk_file}'\n")
-
-    # Usar FFmpeg para combinar los fragmentos
-    try:
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-f",
-                "concat",
-                "-safe",
-                "0",
-                "-i",
-                str(file_list_path),
-                "-c",
-                "copy",
-                str(output_file),
-            ],
-            check=True,
-        )
-        print(f"[INFO] Video procesado correctamente: {output_file}")
-
-        # Opcional: Limpia los fragmentos temporales
-        for chunk_file in stream_temp_dir.glob("chunk_*.webm"):
-            chunk_file.unlink()
-        file_list_path.unlink()
-        stream_temp_dir.rmdir()
-
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Error procesando el video para el stream ID={stream_id}: {e}")
-        raise
-
 
 def check_video_status(request, stream_id):
     recorded_file = Path(settings.MEDIA_ROOT) / "recorded_streams" / f"{stream_id}.webm"

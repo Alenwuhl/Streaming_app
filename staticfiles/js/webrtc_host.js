@@ -1,10 +1,15 @@
+import {
+  getStreamIDFromURL,
+  updateButtonState,
+  getCSRFToken,
+} from "./utils.js";
+import { startRecording } from "./stream_recorder.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("[INFO] Initializing WebRTC for Host...");
 
-  const urlPath = window.location.pathname;
-  const match = urlPath.match(/(\d+)/);
-  const streamID = match ? match[0] : null;
-
+  // Obtener el ID del stream
+  const streamID = getStreamIDFromURL();
   if (!streamID) {
     console.error("[ERROR] Stream ID is missing or invalid.");
     return;
@@ -28,31 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const localVideo = document.getElementById("localVideo");
   const sharedScreen = document.getElementById("sharedScreen");
-  const videoContainer = document.querySelector(".video-container");
-
-  // Button elements
   const screenShareButton = document.getElementById("shareScreenButton");
 
-  sharedScreen.addEventListener("click", () => {
-    if (isScreenSharing) {
-      console.log("[INFO] Shared screen clicked. Swapping with local video.");
-      swapVideos(sharedScreen, localVideo);
-    }
-  });
-
-  localVideo.addEventListener("click", () => {
-    if (isScreenSharing) {
-      console.log("[INFO] Local video clicked. Swapping with shared screen.");
-      swapVideos(localVideo, sharedScreen);
-    }
-  });
-
-  /**
-   * Initialize local media stream
-   */
-  /**
-   * Initialize local media stream
-   */
+  // Inicializar el stream local
   async function initializeLocalStream() {
     try {
       console.log("[INFO] Accessing local media...");
@@ -61,21 +44,14 @@ document.addEventListener("DOMContentLoaded", () => {
         audio: true,
       });
 
-      if (!isScreenSharing) {
-        // Solo asignar al localVideo si no se está compartiendo pantalla
+      if (localStream) {
         localVideo.srcObject = localStream;
         localVideo.classList.add("video-large");
-      } else {
-        localVideo.srcObject = localStream;
-        localVideo.classList.add("video-small");
-        console.warn(
-          "[WARNING] Screen sharing is active. Skipping local video assignment."
-        );
+        console.log("[INFO] Local stream initialized successfully.");
       }
-
       return localStream;
     } catch (error) {
-      console.error("[ERROR] Error accessing media devices:", error);
+      console.error("[ERROR] Failed to initialize local stream:", error);
       alert(
         "Could not access camera and microphone. Please check permissions."
       );
@@ -83,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Configuración del WebSocket
   websocket.onopen = async () => {
     console.log("[INFO] WebSocket is connected as Host.");
     const stream = await initializeLocalStream();
@@ -105,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await setRemoteAnswer(message.data);
     } else if (message.type === "ice") {
       console.log("[DEBUG] Host received ICE candidate from viewer.");
-      if (peerConnection && peerConnection.remoteDescription) {
+      if (peerConnection?.remoteDescription) {
         await addIceCandidate(message.data);
       } else {
         pendingICECandidates.push(message.data);
@@ -122,45 +99,13 @@ document.addEventListener("DOMContentLoaded", () => {
     cleanupPeerConnection();
   };
 
-  /**
-   * Set the remote answer from the viewer
-   * @param {RTCSessionDescriptionInit} answer
-   */
-  async function setRemoteAnswer(answer) {
-    try {
-      console.log("[INFO] Setting remote answer.");
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-      console.log("[INFO] Remote answer set successfully.");
-
-      for (const candidate of pendingICECandidates) {
-        await addIceCandidate(candidate);
-      }
-      pendingICECandidates = [];
-    } catch (error) {
-      console.error("[ERROR] Error setting remote answer:", error);
-    }
-  }
-
-  /**
-   * Add ICE candidate
-   * @param {RTCIceCandidateInit} candidate
-   */
-  async function addIceCandidate(candidate) {
-    try {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-      console.log("[INFO] ICE candidate added.");
-    } catch (error) {
-      console.error("[ERROR] Error adding ICE candidate:", error);
-    }
-  }
-
-  /**
-   * Create a PeerConnection and handle local stream tracks
-   * @param {MediaStream} localStream
-   */
+  // Crear y configurar PeerConnection
   function createPeerConnection(localStream) {
+    if (!localStream) {
+      console.error("[ERROR] Local stream is null or undefined.");
+      return;
+    }
+
     peerConnection = new RTCPeerConnection(configuration);
 
     localStream.getTracks().forEach((track) => {
@@ -179,24 +124,54 @@ document.addEventListener("DOMContentLoaded", () => {
         peerConnection.restartIce();
       }
     };
+
+    console.log("[INFO] PeerConnection initialized successfully.");
   }
 
-  /**
-   * Start streaming by creating an offer
-   */
+  // Iniciar el streaming
   async function startStreaming() {
     try {
+      if (!peerConnection) {
+        console.error("[ERROR] PeerConnection is not initialized.");
+        return;
+      }
+
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
+
       websocket.send(JSON.stringify({ type: "offer", data: offer }));
+      console.log("[INFO] Streaming started successfully.");
+
+      // Actualizar estado a is_live=true en el backend
+      const response = await fetch(
+        `/streamings/stream/start_live/${streamID}/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCSRFToken(),
+          },
+        }
+      );
+
+      if (response.ok) {
+        console.log("[INFO] Stream is now live on backend.");
+      } else {
+        console.error(
+          "[ERROR] Failed to set stream live:",
+          response.statusText
+        );
+      }
+      if (localStream) {
+        startRecording(localStream, streamID);
+      } else {
+        console.error("[ERROR] Local stream is not available for recording.");
+      }
     } catch (error) {
       console.error("[ERROR] Error starting streaming:", error);
     }
   }
 
-  /**
-   * Start screen sharing
-   */
+  // Configuración de intercambio de pantalla
   async function startScreenShare() {
     try {
       console.log("[INFO] Attempting to start screen sharing...");
@@ -204,47 +179,26 @@ document.addEventListener("DOMContentLoaded", () => {
         video: true,
       });
 
-      if (!screenStream) {
-        console.error("[ERROR] Screen stream is null or undefined.");
-        alert("Failed to capture screen. Please try again.");
-        return false;
+      if (screenStream) {
+        const screenTrack = screenStream.getVideoTracks()[0];
+        screenSender = peerConnection.addTrack(screenTrack, screenStream);
+
+        sharedScreen.srcObject = screenStream;
+        sharedScreen.classList.remove("d-none");
+
+        screenTrack.onended = () => {
+          console.log("[INFO] Screen sharing stopped.");
+          stopScreenShare();
+        };
+
+        isScreenSharing = true;
       }
-
-      const screenTrack = screenStream.getVideoTracks()[0];
-      console.log("[INFO] Screen sharing started. Track:", screenTrack);
-
-      // Add screen track to PeerConnection
-      screenSender = peerConnection.addTrack(screenTrack, screenStream);
-
-      // Set shared screen source and update UI
-      sharedScreen.srcObject = screenStream;
-      sharedScreen.classList.remove("d-none");
-
-      // Swap shared screen to main position
-      // swapVideos(sharedScreen, localVideo);
-
-      // Handle when screen sharing stops
-      screenTrack.onended = () => {
-        console.log("[INFO] Screen sharing stopped by user.");
-        stopScreenShare();
-      };
-
-      websocket.send(JSON.stringify({ type: "screen-sharing", data: true }));
-      isScreenSharing = true;
-      return true;
     } catch (error) {
       console.error("[ERROR] Failed to share screen:", error);
-      alert("Could not start screen sharing. Please check permissions.");
-      return false;
     }
   }
 
-  /**
-   * Stop screen sharing
-   */
   function stopScreenShare() {
-    console.log("[INFO] Stopping screen sharing...");
-
     if (screenSender) {
       peerConnection.removeTrack(screenSender);
       screenSender = null;
@@ -255,84 +209,25 @@ document.addEventListener("DOMContentLoaded", () => {
       screenStream = null;
     }
 
-    // Hide shared screen and revert to camera
     sharedScreen.classList.add("d-none");
-    sharedScreen.srcObject = null;
-
-    // Swap back to local video as main
-    swapVideos(localVideo, sharedScreen);
-
-    websocket.send(JSON.stringify({ type: "screen-sharing", data: false }));
     isScreenSharing = false;
-    console.log("[INFO] Screen sharing stopped.");
   }
 
-  /**
-   * Swap the sizes and positions of the main video and small video
-   * @param {HTMLElement} mainVideo - The main video element (to be enlarged)
-   * @param {HTMLElement} smallVideo - The small video element (to be minimized)
-   */
-  function swapVideos(mainVideo, smallVideo) {
-    if (!mainVideo || !smallVideo || !videoContainer) {
-      console.error("[ERROR] Videos or container not found.");
-      return;
-    }
-
-    console.log("[DEBUG] Swapping videos in the DOM...");
-
-    // Actualizar las clases de los videos
-    mainVideo.classList.remove("video-small");
-    mainVideo.classList.add("video-large");
-
-    smallVideo.classList.remove("video-large");
-    smallVideo.classList.add("video-small");
-
-    console.log("[DEBUG] Main Video Classes after swap:", mainVideo.classList);
-    console.log(
-      "[DEBUG] Small Video Classes after swap:",
-      smallVideo.classList
-    );
-
-    // Reasignar estilos para mantener posiciones visuales
-    mainVideo.style.zIndex = "2"; // Asegurar que esté al frente
-    smallVideo.style.zIndex = "1"; // Asegurar que esté detrás
-
-    console.log("[INFO] Video swap completed successfully.");
-  }
-
-  /**
-   * Initialize the screen share button functionality
-   */
-  if (screenShareButton) {
-    screenShareButton.addEventListener("click", async () => {
-      if (isScreenSharing) {
-        stopScreenShare();
-        updateButtonState(screenShareButton, false);
-      } else {
-        const success = await startScreenShare();
-        if (success) {
-          updateButtonState(screenShareButton, true);
-        }
-      }
-    });
-  } else {
-    console.error("[ERROR] Share Screen button not found.");
-  }
-
-  /**
-   * Update button state for screen sharing
-   * @param {HTMLElement} button
-   * @param {boolean} isActive
-   */
-  function updateButtonState(button, isActive) {
-    if (!button) return;
-
-    if (isActive) {
-      button.classList.replace("btn-outline-warning", "btn-warning");
-      button.innerHTML = '<i class="fas fa-stop"></i> Stop Sharing';
+  // Agregar eventos al botón de compartir pantalla
+  screenShareButton.addEventListener("click", async () => {
+    if (isScreenSharing) {
+      stopScreenShare();
+      updateButtonState(screenShareButton, false);
     } else {
-      button.classList.replace("btn-warning", "btn-outline-warning");
-      button.innerHTML = '<i class="fas fa-desktop"></i> Share Screen';
+      await startScreenShare();
+      updateButtonState(screenShareButton, true);
     }
-  }
+  });
+
+  // Exponer variables necesarias globalmente
+  window.WebRTC = {
+    startStreaming,
+    peerConnection,
+    websocket,
+  };
 });
