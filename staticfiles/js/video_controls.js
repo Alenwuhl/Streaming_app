@@ -1,10 +1,12 @@
+import { stopRecordingAndSave } from "./stream_recorder.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("[INFO] Initializing Video Controls for Host...");
 
   const muteButton = document.getElementById("muteButton");
   const fullscreenButton = document.getElementById("fullscreenButton");
   const shareScreenButton = document.getElementById("shareScreenButton");
-  const endStreamingButton = document.getElementById("startEndStreamingButton");
+  const startendStreamingButton = document.getElementById("startEndStreamingButton");
   const localVideo = document.getElementById("localVideo");
 
   // Initialize Mute Button
@@ -25,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize End Streaming Button
-  if (endStreamingButton) {
+  if (startendStreamingButton) {
     console.log("[DEBUG] End Streaming button found. Event handled in WebRTC logic.");
   }
 
@@ -63,4 +65,21 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("[ERROR] Local video element not found.");
     }
   }
+
+  document.getElementById("startEndStreamingButton").addEventListener("click", async (event) => {
+    const button = event.target;
+    const { startStreaming, peerConnection, websocket } =
+    window.WebRTC;
+    if (button.textContent.includes("Start")) {
+      console.log("[INFO] Starting stream...");
+      await startStreaming();
+      button.textContent = "Stop Streaming";
+      button.classList.replace("btn-success", "btn-danger");
+    } else {
+      console.log("[INFO] Stopping stream...");
+      stopRecordingAndSave(streamId)
+      button.textContent = "Start Streaming";
+      button.classList.replace("btn-danger", "btn-success");
+    }
+  });  
 });
