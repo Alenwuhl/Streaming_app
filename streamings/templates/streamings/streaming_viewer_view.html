@@ -24,6 +24,7 @@
         <video
           id="hostVideo"
           autoplay
+          muted
           playsinline
           class="video-player video-large shadow-lg"
         ></video>
@@ -31,6 +32,7 @@
         <video
           id="sharedScreen"
           autoplay
+          muted
           playsinline
           class="shared-screen video-small d-none"
         ></video>
@@ -96,14 +98,14 @@
 </div>
 
 <!-- JavaScript para WebRTC y chat -->
-<script defer src="{% static 'js/webrtc_viewer.js' %}"></script>
+<script defer  type="module" src="{% static 'js/webrtc_viewer.js' %}"></script>
 <script>
   const username = "{{ username }}";
   const streamId = "{{ stream.id }}";
   const isHost = false;
 </script>
 <script defer src="{% static 'chat/chat.js' %}"></script>
-<script defer src="{% static 'js/video_controls.js' %}"></script>
+<script defer  type="module" src="{% static 'js/screen_share_viewer.js' %}"></script>
 <script defer src="{% static 'surveys/js/viewer_surveys.js' %}" defer></script>
 <script>
   // Mostrar/Ocultar Chat en Móviles
