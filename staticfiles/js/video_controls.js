@@ -1,4 +1,6 @@
 import { stopRecordingAndSave, startRecording } from "./stream_recorder.js";
+import { startScreenShare, stopScreenShare } from "./screen_share_host.js";
+import { updateButtonState } from "./utils.js";
 // import { startStreaming, stopStreaming } from "./webrtc_host.js";
 
 // Initialize video controls when the DOM content is loaded
@@ -18,6 +20,23 @@ document.addEventListener("DOMContentLoaded", () => {
       "[ERROR] Local video element not found. Initialization aborted."
     );
     return;
+  }
+
+  // Initialize ShareScreen Button
+  if (shareScreenButton) {
+    console.log("[INFO] Share Screen button found. Adding event listener.");
+    shareScreenButton.addEventListener("click", async () => {
+      try {
+        console.log("[DEBUG] Share Screen button clicked.");
+        await startScreenShare(); // Llama a la función de compartir pantalla
+        updateButtonState(shareScreenButton, true); // Cambia el estado del botón si se comparte correctamente
+      } catch (error) {
+        console.error("[ERROR] Failed to start screen sharing:", error);
+        updateButtonState(shareScreenButton, false); // Cambia el estado a inactivo si falla
+      }
+    });
+  } else {
+    console.warn("[WARNING] Share Screen button not found in DOM.");
   }
 
   // Initialize Mute Button
