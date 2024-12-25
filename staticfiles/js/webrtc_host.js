@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   console.log(`[DEBUG] Stream ID obtained: ${streamID}`);
 
+  // Asignar streamID a window.WebRTC antes de continuar
+  window.WebRTC = window.WebRTC || {}; // Asegúrate de que WebRTC exista
+  window.WebRTC.streamID = streamID; // Asignar el streamID a WebRTC
+  console.log(`[DEBUG] Stream ID assigned to WebRTC: ${streamID}`);
+
   const websocketURL = `ws://${window.location.host}/ws/stream/${streamID}/`;
   const websocket = new WebSocket(websocketURL);
   console.log(`[INFO] WebSocket URL: ${websocketURL}`);
@@ -93,9 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("[INFO] WebSocket is connected as Host.");
     const stream = await initializeLocalStream();
     if (stream) {
+      window.WebRTC.localStream = stream;
       createPeerConnection(stream);
     } else {
       console.error("[ERROR] Local stream initialization failed.");
+      alert("Failed to initialize local stream. Please check your setup.");
+      websocket.close(); // Cierra el WebSocket si la inicialización falla.
     }
   };
 
@@ -126,7 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   websocket.onclose = (event) => {
     console.warn("[WARNING] WebSocket closed unexpectedly:", event);
-    cleanupPeerConnection();
   };
 
   async function addIceCandidate(candidate) {
@@ -235,29 +242,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function stopStreaming() {
     console.log("[INFO] Stopping streaming...");
+
     try {
+      // Cerrar PeerConnection
       if (peerConnection) {
         peerConnection.close();
         console.log("[INFO] PeerConnection closed.");
       }
-      websocket.close();
-      console.log("[INFO] WebSocket closed.");
 
-      // Notify backend
-      const response = await fetch(
-        `/streamings/stream/stop_live/${streamID}/`,
-        {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": getCSRFToken(),
-          },
-        }
-      );
-      if (response.ok) {
-        console.log("[INFO] Stream stopped successfully on backend.");
-      } else {
-        console.error("[ERROR] Failed to notify backend:", response.status);
+      // Cerrar WebSocket
+      if (websocket) {
+        websocket.close();
+        console.log("[INFO] WebSocket closed.");
       }
+
+      console.log("[INFO] Streaming stopped locally.");
     } catch (error) {
       console.error("[ERROR] Error stopping streaming:", error);
     }
@@ -266,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.WebRTC = {
     startStreaming,
     stopStreaming,
+    localStream,
     streamID,
     peerConnection,
     websocket,

@@ -2,7 +2,8 @@ from celery import shared_task
 from pathlib import Path
 from django.conf import settings
 import subprocess
-
+from streamings.models import Streaming  # Asegúrate de importar tu modelo
+from django.utils import timezone
 
 @shared_task
 def process_video(stream_id):
@@ -52,6 +53,16 @@ def process_video(stream_id):
             check=True,
         )
         print(f"[INFO] Video procesado correctamente: {output_file}")
+
+        # Actualizar el campo video_file en el modelo Streaming
+        try:
+            streaming = Streaming.objects.get(id=stream_id)
+            streaming.video_file = f"recorded_streams/{stream_id}.webm"
+            streaming.recorded_date = timezone.now() 
+            streaming.save()
+            print(f"[INFO] Campo video_file actualizado para stream ID={stream_id}.")
+        except Streaming.DoesNotExist:
+            print(f"[ERROR] Streaming con ID={stream_id} no encontrado.")
 
         # Limpiar fragmentos temporales
         for chunk_file in chunks:

@@ -79,7 +79,16 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           console.log("[DEBUG] Checking WebRTC object:", window.WebRTC);
           await startStreaming(); // Función de `webrtc_host.js`
-          startRecording(streamID); // Función de `stream_recorder.js`
+          if (!window.WebRTC.localStream) {
+            console.error("[ERROR] localStream is not initialized.");
+            alert("The local video stream is not ready. Please try again.");
+            return;
+          }
+          if (!streamID) {
+            console.error("[ERROR] Stream ID is missing: ", streamID);
+            return;
+          }
+          startRecording(window.WebRTC.localStream, streamID); // Función de `stream_recorder.js`
           button.textContent = "Stop Streaming";
           button.classList.replace("btn-success", "btn-danger");
         } catch (error) {
@@ -88,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         console.log("[INFO] Stopping stream and recording...");
         try {
-          stopRecordingAndSave(); // Función de `stream_recorder.js`
+          stopRecordingAndSave(streamID); // Función de `stream_recorder.js`
           await stopStreaming(); // Función de `webrtc_host.js`
           button.textContent = "Start Streaming";
           button.classList.replace("btn-danger", "btn-success");
