@@ -199,6 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
+    // Asignar el PeerConnection a window.WebRTC
+    window.WebRTC.peerConnection = peerConnection;
+
     console.log("[INFO] PeerConnection created successfully.");
   }
 
@@ -265,6 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.WebRTC = {
     startStreaming,
     stopStreaming,
+    sharedScreen,
     localStream,
     streamID,
     peerConnection,
