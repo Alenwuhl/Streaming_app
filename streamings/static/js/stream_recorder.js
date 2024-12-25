@@ -8,9 +8,11 @@ import { getCSRFToken } from "./utils.js";
 /**
  * Inicia la grabación de un stream.
  * @param {MediaStream} stream - Objeto de MediaStream válido.
- * @param {string} streamId - ID único del stream.
+ * @param {string} streamID - ID único del stream.
+ * @param {Blob} videoBlob - Fragmento de video en formato Blob.
+ * @param {number} chunkIndex - Índice del fragmento actual.
  */
-export function startRecording(stream, streamId) {
+export function startRecording(stream, streamID) {
   console.log("[DEBUG] Verificando si el stream es válido...");
   if (!(stream instanceof MediaStream)) {
     console.error("[ERROR] startRecording: Objeto stream inválido:", stream);
@@ -34,7 +36,7 @@ export function startRecording(stream, streamId) {
       console.log("[INFO] Grabación finalizada.");
       if (recordedChunks.length > 0) {
         console.log("[INFO] Subiendo los fragmentos grabados...");
-        await uploadAllChunks(streamId);
+        await uploadAllChunks(streamID);
       } else {
         console.warn("[WARNING] No hay fragmentos grabados para subir.");
       }
@@ -48,11 +50,7 @@ export function startRecording(stream, streamId) {
   }
 }
 
-/**
- * Detiene la grabación de video y notifica al servidor.
- * @param {string} streamId - ID del stream que se está grabando.
- */
-export async function stopRecordingAndSave(streamId) {
+export async function stopRecordingAndSave(streamID) {
   if (!isRecording || !mediaRecorder) {
     console.warn("[WARNING] No hay grabación activa para detener.");
     return;
@@ -62,10 +60,15 @@ export async function stopRecordingAndSave(streamId) {
   mediaRecorder.stop();
   isRecording = false;
 
-  // Finalizar el stream en el servidor
+  console.log("[INFO] Subiendo fragmentos grabados...");
+  await uploadAllChunks(streamID);
+
+  console.log(
+    "[INFO] Notificando al servidor sobre la finalización del stream..."
+  );
   try {
     const csrfToken = getCSRFToken();
-    const response = await fetch(`/streamings/stream/end/${streamId}/`, {
+    const response = await fetch(`/streamings/stream/end/${streamID}/`, {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -73,52 +76,47 @@ export async function stopRecordingAndSave(streamId) {
       },
     });
 
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.error("[ERROR] Server response is not JSON.");
+      alert("Failed to end the stream. Please try again.");
+      return;
+    }
+
     const data = await response.json();
     if (data.status === "success") {
       console.log("[INFO] El stream finalizó exitosamente en el servidor.");
-      console.log("[INFO] Redirigiendo a la página principal...");
+      alert("Stream has been finalized successfully.");
       window.location.href = "/";
     } else {
-      console.error(
-        "[ERROR] Fallo al finalizar el stream en el servidor:",
-        data.message
-      );
+      console.error("[ERROR] Failed to end stream on server:", data.message);
     }
   } catch (error) {
-    console.error(
-      "[ERROR] Error al finalizar el stream en el servidor:",
-      error
-    );
+    console.error("[ERROR] Error ending stream on server:", error);
   }
 }
 
 /**
  * Sube todos los fragmentos grabados al servidor.
- * @param {string} streamId - ID del stream al que pertenecen los fragmentos.
+ * @param {string} streamID - ID del stream al que pertenecen los fragmentos.
  */
-async function uploadAllChunks(streamId) {
+async function uploadAllChunks(streamID) {
   for (let i = 0; i < recordedChunks.length; i++) {
     const chunk = recordedChunks[i];
-    await uploadVideoChunk(chunk, streamId, i);
+    await uploadVideoChunk(chunk, streamID, i);
   }
   recordedChunks = []; // Limpiar los fragmentos grabados después de subirlos
   console.log("[INFO] Todos los fragmentos se subieron exitosamente.");
 }
 
-/**
- * Sube un fragmento de video al servidor.
- * @param {Blob} videoBlob - Fragmento de video en formato Blob.
- * @param {string} streamId - ID del stream al que pertenece el fragmento.
- * @param {number} chunkIndex - Índice del fragmento actual.
- */
-async function uploadVideoChunk(videoBlob, streamId, chunkIndex) {
+async function uploadVideoChunk(videoBlob, streamID, chunkIndex) {
   const formData = new FormData();
   formData.append("video_chunk", videoBlob);
   formData.append("chunk_index", chunkIndex);
 
   console.log(`[DEBUG] Subiendo fragmento ${chunkIndex} al servidor...`);
   try {
-    const response = await fetch(`/streamings/save_video/${streamId}/`, {
+    const response = await fetch(`/streamings/save_video/${streamID}/`, {
       method: "POST",
       headers: {
         "X-CSRFToken": getCSRFToken(),
@@ -135,9 +133,6 @@ async function uploadVideoChunk(videoBlob, streamId, chunkIndex) {
       );
     }
   } catch (error) {
-    console.error(
-      `[ERROR] Error al subir el fragmento ${chunkIndex}:`,
-      error
-    );
+    console.error(`[ERROR] Error al subir el fragmento ${chunkIndex}:`, error);
   }
 }

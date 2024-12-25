@@ -154,7 +154,7 @@ CHANNEL_LAYERS = {
 import os
 from pathlib import Path
 
-MEDIA_ROOT = Path(BASE_DIR) / "media"
+MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 MEDIA_TEMP_STREAMS = MEDIA_ROOT / "temp_streams"
 
