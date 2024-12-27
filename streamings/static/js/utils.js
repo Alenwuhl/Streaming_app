@@ -1,6 +1,6 @@
 /**
- * Obtiene el ID del stream de la URL actual.
- * @returns {string | null} El ID del stream o null si no se encuentra.
+ * Gets the stream ID of the current URL.
+ * @returns {string | null} The stream ID or null if not found.
  */
 export function getStreamIDFromURL() {
   const match = window.location.pathname.match(/(\d+)/);
@@ -8,9 +8,9 @@ export function getStreamIDFromURL() {
 }
 
 /**
- * Actualiza el estado de un botón en función de si está activo o no.
- * @param {HTMLElement} button El botón a actualizar.
- * @param {boolean} isActive Indica si el botón debe estar en estado activo.
+ * Updates the state of a button based on whether it is active or not.
+ * @param {HTMLElement} button The button to update.
+ * @param {boolean} isActive Indicates whether the button should be in an active state.
  */
 export function updateButtonState(button, isActive) {
   if (!button) return;
@@ -25,8 +25,8 @@ export function updateButtonState(button, isActive) {
 }
 
 /**
- * Obtiene el token CSRF de las cookies.
- * @returns {string | null} El token CSRF o null si no se encuentra.
+ * Gets the CSRF token from the cookies.
+ * @returns {string | null} The CSRF token or null if not found.
  */
 export function getCSRFToken() {
   return document.cookie

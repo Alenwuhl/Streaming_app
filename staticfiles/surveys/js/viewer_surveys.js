@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("[DEBUG] Viewer survey logic initialized.");
   
     const isHost = document.body.dataset.isHost === "true";
     if (isHost) {
@@ -18,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
     surveySocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("[DEBUG] Message received from WebSocket:", data);
   
       if (data.type === "survey_start") {
         console.log("[INFO] Displaying active survey for viewer...");
@@ -27,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
         surveyOptions.innerHTML = "";
   
         data.options.forEach((option, index) => {
-          console.log(`[DEBUG] Rendering option ${index + 1}:`, option);
   
           const optionElement = document.createElement("div");
           optionElement.className = "option my-2";

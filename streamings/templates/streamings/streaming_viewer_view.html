@@ -10,17 +10,17 @@
   data-username="{{ username }}"
   data-hostname="{{ hostname }}"
 >
-  <!-- Título y Descripción -->
+  <!-- Title and Description -->
   <h2 class="text-primary font-weight-bold mb-2 text-center">
     {{ stream.title }}
   </h2>
   <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
 
   <div class="row w-100 d-flex justify-content-center">
-    <!-- Contenedor de Video -->
+    <!-- Video Container -->
     <div class="col-lg-8 col-md-10 mb-4">
       <div class="video-container position-relative">
-        <!-- Video principal (Host) -->
+        <!-- Main Video (Host) -->
         <video
           id="hostVideo"
           autoplay
@@ -28,20 +28,20 @@
           playsinline
           class="video-player video-large shadow-lg"
         ></video>
-        <!-- Pantalla compartida -->
+        <!-- Screen sharing -->
         <video
           id="sharedScreen"
           autoplay
           muted
           playsinline
-          class="shared-screen video-small d-none"
+          class="video-small d-none"
         ></video>
       </div>
     </div>
 
-    <!-- Contenedor de Chat y Encuesta -->
+    <!-- Chat and Poll Container -->
     <div class="col-lg-4 col-md-10 mb-4">
-      <!-- Encuesta Activa -->
+      <!-- Active Survey -->
       <div id="active-survey" class="card d-none mb-3">
         <div class="card-body">
           <h5 id="survey-question" class="card-title text-center"></h5>
@@ -49,7 +49,7 @@
         </div>
       </div>
 
-      <!-- Chat en Vivo -->
+      <!-- Live Chat -->
       <div class="card chat-container">
         <div class="card-header text-secondary text-center">
           <h5>Live Chat</h5>
@@ -71,12 +71,12 @@
     </div>
   </div>
 
-  <!-- Botón para Mostrar/Ocultar Chat en Móviles -->
+  <!-- Show/Hide Chat Button on Mobile -->
   <button id="toggleChatButton" class="btn btn-outline-primary d-lg-none mt-3">
     <i class="fas fa-comments"></i> Show Chat
   </button>
 
-  <!-- Contenedor de Chat en Móviles (Oculto por Defecto) -->
+  <!-- Chat Container on Mobile (Hidden by Default) -->
   <div id="mobileChatContainer" class="card d-lg-none mt-3" style="display: none">
     <div class="card-header text-secondary text-center">
       <h5>Live Chat</h5>
@@ -97,7 +97,6 @@
   </div>
 </div>
 
-<!-- JavaScript para WebRTC y chat -->
 <script defer  type="module" src="{% static 'js/webrtc_viewer.js' %}"></script>
 <script>
   const username = "{{ username }}";
@@ -108,7 +107,7 @@
 <script defer  type="module" src="{% static 'js/screen_share_viewer.js' %}"></script>
 <script defer src="{% static 'surveys/js/viewer_surveys.js' %}" defer></script>
 <script>
-  // Mostrar/Ocultar Chat en Móviles
+  // Js to show and hide the chat. It should be handled from chat.js
   document.getElementById("toggleChatButton").addEventListener("click", () => {
     const chatContainer = document.getElementById("mobileChatContainer");
     if (chatContainer.style.display === "none") {

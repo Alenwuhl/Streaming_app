@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 });
 
+// Function to handle the new track
 function handleScreenShareTrack(track) {
   if (track.kind === "video") {
     console.log("[INFO] Screen sharing track received.");
@@ -19,59 +20,47 @@ function handleScreenShareTrack(track) {
     sharedScreenStream = new MediaStream([track]);
 
     const sharedScreen = document.getElementById("sharedScreen");
-    const hostVideo = document.getElementById("hostVideo");
-
-    if (!sharedScreen || !hostVideo) {
-      console.error(
-        "[ERROR] Required elements for screen sharing are missing."
-      );
-      return;
-    }
-
-    // Configurar pantalla compartida
     sharedScreen.srcObject = sharedScreenStream;
-    sharedScreen.classList.remove("d-none");
-    sharedScreen.classList.add("video-large");
-
-    // Minimizar video del host
-    hostVideo.classList.remove("video-large");
-    hostVideo.classList.add("video-small");
-
     console.log("[INFO] Screen sharing started: ", sharedScreenStream);
+    sharedScreen.classList.remove("d-none");
+
     isScreenSharingActive = true;
 
-    // Manejar el evento de finalización
     track.onended = () => stopScreenShareViewer();
   }
 }
 
+// Function to stop the screen share viewer
 function stopScreenShareViewer() {
   console.log("[INFO] Screen sharing stopped.");
   const sharedScreen = document.getElementById("sharedScreen");
-  const hostVideo = document.getElementById("hostVideo");
-
-  if (!sharedScreen || !hostVideo) {
-    console.error(
-      "[ERROR] Required elements for stopping screen sharing are missing."
-    );
-    return;
-  }
-
-  // Detener y ocultar la pantalla compartida
   sharedScreen.srcObject = null;
   sharedScreen.classList.add("d-none");
-  sharedScreen.classList.remove("video-large");
-  sharedScreen.classList.remove("video-small");
-
-  // Restaurar el video del host
-  hostVideo.classList.remove("video-small");
-  hostVideo.classList.add("video-large");
 
   sharedScreenTrack = null;
   sharedScreenStream = null;
   isScreenSharingActive = false;
-
-  console.log("[INFO] Screen sharing stopped and host video restored.");
 }
 
-export { handleScreenShareTrack, stopScreenShareViewer };
+// Function to toggle between shared screen and host video in the DOM
+function toggleScreenView(hostVideo, sharedScreen) {
+  if (sharedScreen.classList.contains("video-large")) {
+    sharedScreen.classList.remove("video-large");
+    sharedScreen.classList.add("video-small");
+
+    hostVideo.classList.remove("video-small");
+    hostVideo.classList.add("video-large");
+  } else {
+    sharedScreen.classList.remove("video-small");
+    sharedScreen.classList.add("video-large");
+
+    hostVideo.classList.remove("video-large");
+    hostVideo.classList.add("video-small");
+  }
+
+  console.log(
+    "[INFO] Toggled screen view between host video and shared screen."
+  );
+}
+
+export { handleScreenShareTrack, stopScreenShareViewer, toggleScreenView };

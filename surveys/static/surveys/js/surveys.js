@@ -6,7 +6,7 @@ function addSurveyOption() {
     return;
   }
 
-  const optionCount = optionsContainer.childElementCount + 1; // Contar opciones existentes
+  const optionCount = optionsContainer.childElementCount + 1; // Count existing options
   if (optionCount > 5) {
     console.warn("[WARNING] Maximum of 5 options reached.");
     alert("You can add up to 5 options only.");
@@ -24,25 +24,22 @@ function addSurveyOption() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("[DEBUG] DOMContentLoaded triggered.");
-
-  // Accede al contenedor principal con el atributo `data-is-host`
+  // Access the parent container with the `data-is-host` attribute
   const mainContainer = document.querySelector("[data-is-host]");
   if (!mainContainer) {
     console.error("[ERROR] Main container with data-is-host not found.");
     return;
   }
 
-  // Verifica si el usuario es host
+  // Check if the user is a host
   const isHost = mainContainer.getAttribute("data-is-host") === "true";
-  console.log(`[DEBUG] Is Host: ${isHost}`);
 
   if (!isHost) {
     console.log("[INFO] Skipping surveys.js for viewer.");
     return;
   }
 
-  // Variables para el host
+  // Variables for the host
   const surveyContainer = document.getElementById("active-survey");
   const surveyQuestion = document.getElementById("survey-question");
   const surveyOptions = document.getElementById("survey-options");
@@ -51,8 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const createSurveyBtn = document.getElementById("createSurveyButton");
   const surveyForm = document.getElementById("surveyForm");
   const surveyModal = document.getElementById("surveyModal");
-
-  console.log("[DEBUG] Checking presence of survey elements in DOM...");
   const requiredElements = [
     { element: surveyContainer, name: "Survey container" },
     { element: surveyQuestion, name: "Survey question container" },
@@ -98,16 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   surveySocket.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    console.log("[DEBUG] Message received from WebSocket:", data);
 
     if (data.type === "survey_update") {
       console.log("[INFO] Updating survey results...");
       data.results.forEach((result, index) => {
         const progressBar = document.getElementById(`progress-${index}`);
         if (progressBar) {
-          console.log(
-            `[DEBUG] Updating progress for option ${index}: ${result.percentage}%`
-          );
           progressBar.style.width = `${result.percentage}%`;
         } else {
           console.warn(`[WARNING] Progress bar for option ${index} not found.`);
@@ -127,28 +118,26 @@ document.addEventListener("DOMContentLoaded", () => {
   startSurveyBtn.addEventListener("click", () => {
     console.log("[INFO] Start Survey Button clicked. Opening modal...");
 
-    // Mostrar el modal
+    // Show the modal
     $(`#${surveyModal.id}`).modal("show");
 
-    // Asegurar aria-hidden sea false
+    // Ensure aria-hidden is false
     surveyModal.setAttribute("aria-hidden", "false");
-    console.log("[DEBUG] surveyModal aria-hidden set to false.");
   });
 
   $(".btn-close").on("click", () => {
     console.log("[INFO] Closing survey modal...");
 
-    // Ocultar el modal
+    // Hide the modal
     $(`#${surveyModal.id}`).modal("hide");
 
-    // Asegurar aria-hidden sea true
+    // Ensure aria-hidden is true
     surveyModal.setAttribute("aria-hidden", "true");
-    console.log("[DEBUG] surveyModal aria-hidden set to true.");
 
-    // Reiniciar el formulario
+    // Restart the form
     surveyForm.reset();
     const optionsContainer = document.getElementById("surveyOptionsContainer");
-    optionsContainer.innerHTML = ""; // Limpiar opciones
+    optionsContainer.innerHTML = ""; // Clear options
   });
 
   endSurveyBtn.addEventListener("click", () => {
@@ -175,11 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .filter((value) => value !== "");
 
     const duration = document.getElementById("surveyDuration").value.trim();
-    console.log("[DEBUG] Collected survey data:", {
-      question,
-      options,
-      duration,
-    });
 
     if (!question || options.length < 2) {
       console.error(

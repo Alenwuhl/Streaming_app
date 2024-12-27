@@ -1,8 +1,6 @@
-{% extends 'base/layout.html' %}
-{% load static %}
-{% block title %}{{ stream.title }} - Host{% endblock %}
-{% block content %}
-{% include "surveys/modal.html" %}
+{% extends 'base/layout.html' %} {% load static %} {% block title %}{{
+stream.title }} - Host{% endblock %} {% block content %} {% include
+"surveys/modal.html" %}
 <div
   class="container-fluid d-flex justify-content-center align-items-center flex-column"
   style="min-height: 100vh; overflow: hidden"
@@ -11,25 +9,25 @@
   data-username="{{ username }}"
   data-hostname="{{ hostname }}"
 >
-  <!-- Título y Descripción -->
+  <!-- Title and Description -->
   <h2 class="text-primary font-weight-bold mb-2 text-center">
     {{ stream.title }}
   </h2>
   <p class="text-muted mb-3 text-center">{{ stream.description }}</p>
 
-  <!-- Contenedor Principal -->
+  <!-- Main Container -->
   <div class="row justify-content-center w-100">
-    <!-- Sección de Video y Pantalla Compartida -->
+    <!-- Video and Screen Sharing section -->
     <div class="col-lg-8 col-md-10 mb-4">
       <div class="video-container mx-auto position-relative">
-        <!-- Video Principal -->
+        <!-- Main Video -->
         <video
           id="localVideo"
           autoplay
           muted
           class="video-large shadow-lg"
         ></video>
-        <!-- Pantalla Compartida -->
+        <!-- Screen Sharing -->
         <video
           id="sharedScreen"
           autoplay
@@ -39,9 +37,9 @@
       </div>
     </div>
 
-    <!-- Contenedor de Chat y Encuesta -->
+    <!-- Chat and Poll Container -->
     <div class="col-lg-4 d-none d-lg-block">
-      <!-- Encuesta Activa -->
+      <!-- Active Survey -->
       <div id="active-survey" class="card d-none mb-3">
         <div class="card-body">
           <h5 id="survey-question" class="card-title text-center"></h5>
@@ -52,7 +50,7 @@
         </div>
       </div>
 
-      <!-- Chat en Vivo -->
+      <!-- Live chat -->
       <div class="chat-container card">
         <div class="card-header text-secondary text-center">
           <h5>Live Chat</h5>
@@ -73,7 +71,7 @@
       </div>
     </div>
 
-    <!-- Controles del Host -->
+    <!-- Host Controls -->
     <div class="controls d-flex flex-wrap justify-content-center mt-3">
       <button id="muteButton" class="btn btn-outline-primary btn-lg mx-2">
         <i class="fas fa-volume-mute"></i>
@@ -119,6 +117,10 @@
 <script defer src="{% static 'chat/chat.js' %}"></script>
 <script defer type="module" src="{% static 'js/video_controls.js' %}"></script>
 <script defer type="module" src="{% static 'js/stream_recorder.js' %}"></script>
-<script defer type="module" src="{% static 'js/screen_share_host.js' %}"></script>
+<script
+  defer
+  type="module"
+  src="{% static 'js/screen_share_host.js' %}"
+></script>
 <script defer src="{% static 'surveys/js/surveys.js' %}"></script>
 {% endblock %}

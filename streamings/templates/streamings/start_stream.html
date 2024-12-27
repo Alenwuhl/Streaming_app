@@ -1,37 +1,52 @@
-{% extends 'base/layout.html' %}
-{% load crispy_forms_tags %}
-{% load static %}
-{% block title %}Start Streaming{% endblock %}
+{% extends 'base/layout.html' %} {% load crispy_forms_tags %} {% load static %}
+{% block title %}Start Streaming{% endblock %} {% block content %}
+<div
+  class="d-flex justify-content-center align-items-center"
+  style="min-height: 100vh; padding: 20px"
+>
+  <div class="col-lg-6 col-md-8 col-sm-10">
+    <div
+      class="card shadow border-0"
+      style="
+        border-radius: 15px;
+        background: linear-gradient(135deg, #e2ebf0, #cfd8e3);
+      "
+    >
+      <div
+        class="card-header bg-primary text-white text-center"
+        style="border-radius: 15px 15px 0 0"
+      >
+        <h3 class="mb-0">
+          <i class="fas fa-video text-warning"></i> Start a New Streaming
+        </h3>
+      </div>
+      <div
+        class="card-body p-4"
+        style="background-color: #f7f9fc; border-radius: 0 0 15px 15px"
+      >
+        <form method="post">
+          {% csrf_token %}
+          <!-- Field for the stream title -->
+          <div class="form-group mb-4">{{ form.title|as_crispy_field }}</div>
 
-{% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 100vh; padding: 20px;">
-    <div class="col-lg-6 col-md-8 col-sm-10">
-        <div class="card shadow border-0" style="border-radius: 15px; background: linear-gradient(135deg, #e2ebf0, #cfd8e3);">
-            <div class="card-header bg-primary text-white text-center" style="border-radius: 15px 15px 0 0;">
-                <h3 class="mb-0"><i class="fas fa-video text-warning"></i> Start a New Streaming</h3>
-            </div>
-            <div class="card-body p-4" style="background-color: #f7f9fc; border-radius: 0 0 15px 15px;">
-                <form method="post">
-                    {% csrf_token %}
-                    <!-- Campo para el título del stream -->
-                    <div class="form-group mb-4">
-                        {{ form.title|as_crispy_field }}
-                    </div>
+          <!-- Field for stream description -->
+          <div class="form-group mb-4">
+            {{ form.description|as_crispy_field }}
+          </div>
 
-                    <!-- Campo para la descripción del stream -->
-                    <div class="form-group mb-4">
-                        {{ form.description|as_crispy_field }}
-                    </div>
-
-                    <!-- Botón para continuar -->
-                    <div class="form-group text-center">
-                        <button type="submit" class="btn btn-success btn-lg px-5 shadow-lg" style="border-radius: 50px; transition: all 0.3s ease;">
-                            <i class="fas fa-arrow-right"></i> Continue
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+          <!-- Button to continue -->
+          <div class="form-group text-center">
+            <button
+              type="submit"
+              class="btn btn-success btn-lg px-5 shadow-lg"
+              style="border-radius: 50px; transition: all 0.3s ease"
+            >
+              <i class="fas fa-arrow-right"></i> Continue
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

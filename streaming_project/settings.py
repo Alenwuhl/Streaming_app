@@ -158,11 +158,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 MEDIA_TEMP_STREAMS = MEDIA_ROOT / "temp_streams"
 
-# Crear los directorios si no existen
+# Create directories if they do not exist
 MEDIA_TEMP_STREAMS.mkdir(parents=True, exist_ok=True)
 
 
-# Configuración de Celery
+# Celery configuration
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"

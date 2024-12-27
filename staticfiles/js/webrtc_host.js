@@ -1,9 +1,4 @@
-import {
-  getStreamIDFromURL,
-  getCSRFToken,
-  updateButtonState,
-} from "./utils.js";
-import { startRecording } from "./stream_recorder.js";
+import { getCSRFToken } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("[INFO] Initializing WebRTC for Host...");
@@ -16,12 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("[ERROR] Stream ID is missing or invalid.");
     return;
   }
-  console.log(`[DEBUG] Stream ID obtained: ${streamID}`);
 
-  // Asignar streamID a window.WebRTC antes de continuar
-  window.WebRTC = window.WebRTC || {}; // Asegúrate de que WebRTC exista
-  window.WebRTC.streamID = streamID; // Asignar el streamID a WebRTC
-  console.log(`[DEBUG] Stream ID assigned to WebRTC: ${streamID}`);
+  // Assign streamID to window.WebRTC before continuing
+  window.WebRTC = window.WebRTC || {};
+  window.WebRTC.streamID = streamID;
 
   const websocketURL = `ws://${window.location.host}/ws/stream/${streamID}/`;
   const websocket = new WebSocket(websocketURL);
@@ -30,8 +23,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let peerConnection = null;
   let pendingICECandidates = [];
   let localStream = null;
-  let screenStream = null;
-  let screenSender = null;
+  // let screenStream = null;
+  // let screenSender = null;
   let isScreenSharing = false;
 
   const configuration = {
@@ -40,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const localVideo = document.getElementById("localVideo");
   const sharedScreen = document.getElementById("sharedScreen");
-  const videoContainer = document.querySelector(".video-container");
+  // const videoContainer = document.querySelector(".video-container");
 
   const screenShareButton = document.getElementById("shareScreenButton");
 
@@ -58,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Function to initialize the Local Stream
   async function initializeLocalStream() {
     try {
       console.log("[INFO] Accessing local media...");
@@ -68,8 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       localVideo.srcObject = localStream;
       localVideo.classList.add("video-large");
-
-      console.log("[DEBUG] Local stream tracks:", localStream.getTracks());
 
       localStream.getVideoTracks().forEach((track) => {
         console.log(
@@ -103,13 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       console.error("[ERROR] Local stream initialization failed.");
       alert("Failed to initialize local stream. Please check your setup.");
-      websocket.close(); // Cierra el WebSocket si la inicialización falla.
+      websocket.close();
     }
   };
 
   websocket.onmessage = async (event) => {
     const message = JSON.parse(event.data);
-    console.log("[DEBUG] Received message:", message);
 
     if (message.type === "ready") {
       console.log("[INFO] Viewer is ready, starting streaming.");
@@ -118,7 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("[INFO] Received answer from viewer.");
       await setRemoteAnswer(message.data);
     } else if (message.type === "ice") {
-      console.log("[DEBUG] Host received ICE candidate from viewer.");
       if (peerConnection && peerConnection.remoteDescription) {
         await addIceCandidate(message.data);
       } else {
@@ -156,10 +146,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       for (const candidate of pendingICECandidates) {
         await addIceCandidate(candidate);
-        console.log(
-          "[DEBUG] ICE candidate added from queue, candidate: ",
-          candidate
-        );
       }
       pendingICECandidates = [];
       console.log("[INFO] ICE candidates added successfully.");
@@ -173,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     localStream.getTracks().forEach((track) => {
       peerConnection.addTrack(track, localStream);
-      console.log(`[DEBUG] Host added track: ${track.kind}, ID: ${track.id}`);
     });
 
     peerConnection.onicecandidate = (event) => {
@@ -188,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         console.log("[INFO] All ICE candidates have been sent.");
       }
+      window.WebRTC.peerConnection = peerConnection;
     };
 
     peerConnection.oniceconnectionstatechange = () => {
@@ -199,12 +185,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
-    // Asignar el PeerConnection a window.WebRTC
-    window.WebRTC.peerConnection = peerConnection;
-
     console.log("[INFO] PeerConnection created successfully.");
   }
 
+  // Function to start the streaming
   async function startStreaming() {
     try {
       if (!localStream || !localStream.active) {
@@ -214,7 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("[INFO] Starting streaming.");
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
-      console.log("[DEBUG] Sending offer to viewer:", offer);
       websocket.send(JSON.stringify({ type: "offer", data: offer }));
 
       // Notify backend
@@ -228,11 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
           },
         }
       );
-      console.log(
-        "[DEBUG] `/streamings/stream/start_live/${streamID}/`, The response of the fetch is:",
-        response
-      );
-
       if (response.ok) {
         console.log("[INFO] Stream is now live on backend.");
       } else {
@@ -247,13 +225,13 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("[INFO] Stopping streaming...");
 
     try {
-      // Cerrar PeerConnection
+      // Close PeerConnection
       if (peerConnection) {
         peerConnection.close();
         console.log("[INFO] PeerConnection closed.");
       }
 
-      // Cerrar WebSocket
+      // Close WebSocket
       if (websocket) {
         websocket.close();
         console.log("[INFO] WebSocket closed.");
@@ -265,10 +243,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // global variables
   window.WebRTC = {
     startStreaming,
     stopStreaming,
-    sharedScreen,
     localStream,
     streamID,
     peerConnection,

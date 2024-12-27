@@ -2,7 +2,7 @@ from celery import shared_task
 from pathlib import Path
 from django.conf import settings
 import subprocess
-from streamings.models import Streaming  # Asegúrate de importar tu modelo
+from streamings.models import Streaming
 from django.utils import timezone
 
 @shared_task
@@ -14,7 +14,7 @@ def process_video(stream_id):
 
     file_list_path = stream_temp_dir / "file_list.txt"
 
-    # Verificar la existencia del directorio y fragmentos
+    # Check for directory and fragment existence
     if not stream_temp_dir.exists():
         print(f"[ERROR] Directorio {stream_temp_dir} no existe.")
         return
@@ -23,7 +23,7 @@ def process_video(stream_id):
         print(f"[ERROR] No hay fragmentos en {stream_temp_dir}.")
         return
 
-    # Crear file_list.txt
+    # Create file_list.txt
     try:
         with open(file_list_path, "w") as file_list:
             for chunk_file in chunks:
@@ -33,7 +33,7 @@ def process_video(stream_id):
         print(f"[ERROR] No se pudo generar file_list.txt: {e}")
         return
 
-    # Usar FFmpeg para combinar fragmentos
+    # Use FFmpeg to combine fragments
     output_file = recorded_dir / f"{stream_id}.webm"
     try:
         subprocess.run(
@@ -49,12 +49,12 @@ def process_video(stream_id):
                 "copy",
                 str(output_file),
             ],
-            cwd=stream_temp_dir,  # Contexto: directorio temporal del stream
+            cwd=stream_temp_dir,
             check=True,
         )
         print(f"[INFO] Video procesado correctamente: {output_file}")
 
-        # Actualizar el campo video_file en el modelo Streaming
+        # Update video_file field in Streaming model
         try:
             streaming = Streaming.objects.get(id=stream_id)
             streaming.video_file = f"recorded_streams/{stream_id}.webm"
@@ -64,7 +64,7 @@ def process_video(stream_id):
         except Streaming.DoesNotExist:
             print(f"[ERROR] Streaming con ID={stream_id} no encontrado.")
 
-        # Limpiar fragmentos temporales
+        # Clear temporary fragments
         for chunk_file in chunks:
             chunk_file.unlink()
         file_list_path.unlink()
