@@ -6,13 +6,13 @@
 {% block content %}
     <div class="d-flex justify-content-center align-items-center full-screen">
         <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%; border-radius: 15px;">
-            <!-- Título del formulario -->
+            <!-- Form Title -->
             <h2 class="text-center text-primary mb-4">Join Our Community!</h2>
 
-            <!-- Mensaje introductorio -->
+            <!-- Introductory message -->
             <p class="text-muted text-center mb-4">Create an account to start streaming and connecting with others!</p>
 
-            <!-- Formulario de Registro -->
+            <!-- Registration Form -->
             <form method="post">
                 {% csrf_token %}
                 <div class="form-group mb-3">
@@ -30,7 +30,7 @@
                 <button type="submit" class="btn btn-primary btn-lg btn-block">Register</button>
             </form>
 
-            <!-- Enlace al login -->
+            <!-- login link -->
             <div class="text-center mt-4">
                 <small>Already have an account? <a href="{% url 'login' %}" class="text-primary font-weight-bold">Login here</a></small>
             </div>

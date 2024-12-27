@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('chat-message-input');
     const messageSubmit = document.getElementById('chat-message-submit');
 
-    // Conexión WebSocket
+    // WebSocket conection
     const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${streamId}/`);
 
     messageSubmit.addEventListener('click', () => {

@@ -7,14 +7,14 @@ from .forms import SurveyForm, OptionForm
 def create_survey(request, stream_id):
     if request.method == 'POST':
         survey_form = SurveyForm(request.POST)
-        options = request.POST.getlist('options')  # Recibir las opciones
+        options = request.POST.getlist('options')  # Receive the options
         if survey_form.is_valid() and options:
             survey = survey_form.save(commit=False)
             survey.created_by = request.user
             survey.stream_id = stream_id
             survey.save()
 
-            for option_text in options[:5]:  # Máximo de 5 opciones
+            for option_text in options[:5]:  # Maximum of 5 options
                 Option.objects.create(survey=survey, text=option_text)
 
             return JsonResponse({'message': 'Survey created successfully'}, status=201)

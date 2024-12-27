@@ -1,6 +1,8 @@
+import {
+  initializeScreenSharing,
+  startScreenShare,
+} from "./screen_share_host.js";
 import { stopRecordingAndSave, startRecording } from "./stream_recorder.js";
-import { startScreenShare, stopScreenShare } from "./screen_share_host.js";
-import { updateButtonState } from "./utils.js";
 // import { startStreaming, stopStreaming } from "./webrtc_host.js";
 
 // Initialize video controls when the DOM content is loaded
@@ -22,26 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Initialize ShareScreen Button
-  if (shareScreenButton) {
-    console.log("[INFO] Share Screen button found. Adding event listener.");
-    shareScreenButton.addEventListener("click", async () => {
-      try {
-        console.log("[DEBUG] Share Screen button clicked.");
-        await startScreenShare(); // Llama a la función de compartir pantalla
-        updateButtonState(shareScreenButton, true); // Cambia el estado del botón si se comparte correctamente
-      } catch (error) {
-        console.error("[ERROR] Failed to start screen sharing:", error);
-        updateButtonState(shareScreenButton, false); // Cambia el estado a inactivo si falla
-      }
-    });
-  } else {
-    console.warn("[WARNING] Share Screen button not found in DOM.");
-  }
-
   // Initialize Mute Button
   if (muteButton) {
-    console.log("[DEBUG] Mute button found. Adding event listener.");
     muteButton.addEventListener("click", () =>
       toggleMute(muteButton, localVideo)
     );
@@ -51,7 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize Fullscreen Button
   if (fullscreenButton) {
-    console.log("[DEBUG] Fullscreen button found. Adding event listener.");
     fullscreenButton.addEventListener("click", () =>
       toggleFullscreen(localVideo)
     );
@@ -61,8 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize Share Screen Button
   if (shareScreenButton) {
-    console.log(
-      "[DEBUG] Share Screen button found. Event handled in WebRTC logic."
+    shareScreenButton.addEventListener("click", () =>
+      initializeScreenSharing()
     );
   } else {
     console.warn("[WARNING] Share Screen button not found.");
@@ -70,17 +53,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize Start/End Streaming Button
   if (startEndStreamingButton) {
-    console.log(
-      "[DEBUG] Start/End Streaming button found. Adding event listener."
-    );
     startEndStreamingButton.addEventListener("click", async (event) => {
-      console.log("[DEBUG] Start/End Streaming button clicked.");
 
       const button = event.target;
       const startStreaming = window.WebRTC.startStreaming;
       const stopStreaming = window.WebRTC.stopStreaming;
       const streamID = window.WebRTC.streamID;
-      console.log("[DEBUG] WebRTC object:", window.WebRTC);
 
       if (!window.WebRTC) {
         console.error("[ERROR] WebRTC object is not defined.");
@@ -96,8 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (button.textContent.includes("Start")) {
         console.log("[INFO] Starting stream and recording...");
         try {
-          console.log("[DEBUG] Checking WebRTC object:", window.WebRTC);
-          await startStreaming(); // Función de `webrtc_host.js`
+          await startStreaming(); // `webrtc_host.js` function
           if (!window.WebRTC.localStream) {
             console.error("[ERROR] localStream is not initialized.");
             alert("The local video stream is not ready. Please try again.");
@@ -107,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("[ERROR] Stream ID is missing: ", streamID);
             return;
           }
-          startRecording(window.WebRTC.localStream, streamID); // Función de `stream_recorder.js`
+          startRecording(window.WebRTC.localStream, streamID); // `stream_recorder.js` function
           button.textContent = "Stop Streaming";
           button.classList.replace("btn-success", "btn-danger");
         } catch (error) {
@@ -116,8 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         console.log("[INFO] Stopping stream and recording...");
         try {
-          stopRecordingAndSave(streamID); // Función de `stream_recorder.js`
-          await stopStreaming(); // Función de `webrtc_host.js`
+          stopRecordingAndSave(streamID); /// `stream_recorder.js` function
+          await stopStreaming(); // `webrtc_host.js` function
           button.textContent = "Start Streaming";
           button.classList.replace("btn-danger", "btn-success");
         } catch (error) {

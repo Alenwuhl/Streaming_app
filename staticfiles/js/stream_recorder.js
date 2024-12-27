@@ -2,18 +2,18 @@ let mediaRecorder;
 let isRecording = false;
 let recordedChunks = [];
 
-// Función centralizada para obtener el token CSRF
+// Centralized function to obtain CSRF token
 import { getCSRFToken } from "./utils.js";
 
 /**
- * Inicia la grabación de un stream.
- * @param {MediaStream} stream - Objeto de MediaStream válido.
- * @param {string} streamID - ID único del stream.
- * @param {Blob} videoBlob - Fragmento de video en formato Blob.
- * @param {number} chunkIndex - Índice del fragmento actual.
- */
+* Starts recording a stream.
+* @param {MediaStream} stream - A valid MediaStream object.
+* @param {string} streamID - A unique ID for the stream.
+* @param {Blob} videoBlob - A video chunk in blob format.
+* @param {number} chunkIndex - Index of the current chunk.
+*/
+// Function to start recording a stream
 export function startRecording(stream, streamID) {
-  console.log("[DEBUG] Verificando si el stream es válido...");
   if (!(stream instanceof MediaStream)) {
     console.error("[ERROR] startRecording: Objeto stream inválido:", stream);
     return;
@@ -50,6 +50,7 @@ export function startRecording(stream, streamID) {
   }
 }
 
+// Function to stop the recording and the stream
 export async function stopRecordingAndSave(streamID) {
   if (!isRecording || !mediaRecorder) {
     console.warn("[WARNING] No hay grabación activa para detener.");
@@ -97,24 +98,24 @@ export async function stopRecordingAndSave(streamID) {
 }
 
 /**
- * Sube todos los fragmentos grabados al servidor.
- * @param {string} streamID - ID del stream al que pertenecen los fragmentos.
- */
+* Upload all recorded fragments to the server.
+* @param {string} streamID - ID of the stream to which the fragments belong.
+*/
 async function uploadAllChunks(streamID) {
   for (let i = 0; i < recordedChunks.length; i++) {
     const chunk = recordedChunks[i];
     await uploadVideoChunk(chunk, streamID, i);
   }
-  recordedChunks = []; // Limpiar los fragmentos grabados después de subirlos
+  recordedChunks = []; // Clean up recorded fragments after uploading
   console.log("[INFO] Todos los fragmentos se subieron exitosamente.");
 }
 
+// Helper function to upload a single video chunk
 async function uploadVideoChunk(videoBlob, streamID, chunkIndex) {
   const formData = new FormData();
   formData.append("video_chunk", videoBlob);
   formData.append("chunk_index", chunkIndex);
 
-  console.log(`[DEBUG] Subiendo fragmento ${chunkIndex} al servidor...`);
   try {
     const response = await fetch(`/streamings/save_video/${streamID}/`, {
       method: "POST",

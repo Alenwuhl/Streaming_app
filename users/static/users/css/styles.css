@@ -8,7 +8,7 @@ body {
     animation: fadeIn 0.6s ease-in-out;
 }
 
-/* Animation */
+/* ================= Animation ================== */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -166,7 +166,7 @@ body {
 }
 
 /* ================== Shared Screen Styles ================== */
-  .shared-screen.d-none {
+  .d-none {
     display: none;
   }
 
@@ -198,7 +198,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-bottom: 2px solid #ddd; /* Línea horizontal debajo de las pestañas */
+    border-bottom: 2px solid #ddd; /* Horizontal line under the eyelashes */
     margin-bottom: 20px;
     padding-bottom: 5px;
 }
@@ -211,7 +211,7 @@ body {
     padding: 10px 20px;
     border-radius: 5px;
     transition: all 0.3s ease;
-    text-decoration: none; /* Quitar el subrayado de los enlaces */
+    text-decoration: none; /* Remove underline from links */
 }
 
 .tab-title:hover {
