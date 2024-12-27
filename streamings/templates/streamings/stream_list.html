@@ -97,7 +97,7 @@
                                     <small class="text-muted">
                                         Hosted by: <a href="{% url 'profile' user_id=data.user.id %}" class="text-primary font-weight-bold">{{ data.user.username }}</a>
                                     </small>
-                                    <a href="{% url 'streaming_view' data.active_stream.id %}" class="btn btn-outline-primary btn-sm">
+                                    <a href="{% url 'streaming_viewer_view' data.active_stream.id %}" class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-play-circle"></i> Watch Live
                                     </a>
                                 </div>
