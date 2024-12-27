@@ -32,5 +32,5 @@ class Option(models.Model):
         return f"{self.text} ({self.votes} votes)"
 
 class Vote(models.Model):
-    option = models.ForeignKey(Option, related_name="votes", on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+    option = models.ForeignKey(Option, on_delete=models.CASCADE, related_name="votes_related")
+
