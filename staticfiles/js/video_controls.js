@@ -1,6 +1,5 @@
 import {
   initializeScreenSharing,
-  startScreenShare,
 } from "./screen_share_host.js";
 import { stopRecordingAndSave, startRecording } from "./stream_recorder.js";
 // import { startStreaming, stopStreaming } from "./webrtc_host.js";

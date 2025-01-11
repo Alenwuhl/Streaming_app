@@ -10,27 +10,49 @@ async function startScreenShare() {
       video: true,
     });
 
+    console.log(screenStream.getVideoTracks())
     const screenTrack = screenStream.getVideoTracks()[0];
-    //window.WebRTC.screenSender = peerConnection.addTrack(screenTrack);
-    const screenSender = window.WebRTC.peerConnection.addTrack(screenTrack);
+    screenTrack.contentHint = "screen";
+
+    // Agregar el track con un transceiver específico
+    window.WebRTC.peerConnection.addTrack(screenTrack, screenStream);
+    window.WebRTC.screenStream = screenStream;
+    window.WebRTC.isScreenSharing = true;
+
+
+    // Configurar visualización
     const sharedScreen = document.getElementById("sharedScreen");
-
     sharedScreen.srcObject = screenStream;
-    sharedScreen.classList.remove("d-none");
-    sharedScreen.classList.remove("video-small");
+    sharedScreen.classList.remove("d-none", "video-small");
     sharedScreen.classList.add("video-large");
-    document.getElementById("localVideo").classList.add("video-small");
-    document.getElementById("localVideo").classList.remove("video-large");
 
+    const localVideo = document.getElementById("localVideo");
+    localVideo.classList.add("video-small");
+    localVideo.classList.remove("video-large");
+
+    // Crear y enviar nueva oferta
+    const newOffer = await window.WebRTC.peerConnection.createOffer();
+    await window.WebRTC.peerConnection.setLocalDescription(newOffer);
+    window.WebRTC.websocket.send(
+      JSON.stringify({
+        type: "offer",
+        data: newOffer,
+        screenShare: true, // Indicador para el viewer
+      })
+    );
+
+    // Manejar fin de compartir pantalla
     screenTrack.onended = () => {
-      stopScreenShare(peerConnection, sharedScreen, localVideo);
+      stopScreenShare(window.WebRTC.peerConnection, sharedScreen);
+      window.WebRTC.isScreenSharing = false;
+      window.WebRTC.screenStream = null;
       console.log("[INFO] Screen sharing stopped.");
     };
 
-    window.WebRTC.isScreenSharing = true;
-    console.log("[INFO] Screen sharing started successfully.");
+    console.log("[INFO] Screen sharing started successfully");
   } catch (error) {
-    console.error("[ERROR] Failed to start screen sharing:", error);
+    console.error("[ERROR] Error starting screen share:", error);
+    window.WebRTC.isScreenSharing = false;
   }
 }
 

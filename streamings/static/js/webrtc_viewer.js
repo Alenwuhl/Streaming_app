@@ -32,19 +32,19 @@ document.addEventListener("DOMContentLoaded", () => {
   websocket.onopen = () => {
     console.log("[INFO] WebSocket is connected as Viewer.");
     websocket.send(JSON.stringify({ type: "ready" }));
+
+    if (!peerConnection) {
+      console.log("[INFO] Initializing PeerConnection...");
+      initializePeerConnection();
+    }
   };
 
   websocket.onmessage = (message) => {
     const data = JSON.parse(message.data);
-    messageQueue.push(message);
-    processQueue();
     switch (data.type) {
       case "offer":
         handleOffer(data.data);
         break;
-      // case "answer":
-      //   handleAnswer(data.data);
-      //   break;
       case "ice":
         handleIceCandidate(data.data);
         break;
@@ -56,62 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  function handleOffer(offer) {
-    console.log("[INFO] Handling offer received from host:", offer);
-    setupViewerPeerConnection(offer);
-  }
-
-  function processQueue() {
-    while (messageQueue.length > 0) {
-      const message = messageQueue.shift();
-      if (message.type === "answer") {
-        handleAnswer(message.data);
-      } else if (message.type === "ice") {
-        handleIceCandidate(message.data);
-      }
-    }
-  }
-
-  // async function handleAnswer(answer) {
-
-
-  
-  //   console.log('handleAnswer: peerConnection: ', peerConnection);
-  //   if (peerConnection.signalingState !== "have-local-offer") {
-  //     console.error(
-  //       "[ERROR] PeerConnection is not in the correct state to set remote answer:",
-  //       peerConnection.signalingState
-  //     );
-  //    // return;
-  //   }
-
-  //   console.log("[INFO] Handling answer received from host:", answer);
-
-  //   try {
-  //     await peerConnection.setRemoteDescription(
-  //       new RTCSessionDescription(answer)
-  //     );
-  //     console.log("[INFO] Remote answer set successfully.");
-  //     processIceQueue();
-  //   } catch (err) {
-  //     console.error("[ERROR] Error setting remote answer:", err);
-  //   }
-  // }
-
-  function handleIceCandidate(candidate) {
-    console.log("[INFO] Adding ICE candidate received from host:", candidate);
-    peerConnection
-      .addIceCandidate(new RTCIceCandidate(candidate))
-      .then(() => {
-        console.log("[INFO] ICE candidate added successfully.");
-      })
-      .catch((err) => {
-        console.error("[ERROR] Error adding ICE candidate:", err);
-      });
-  }
-
-  async function setupViewerPeerConnection(offer) {
-    console.log("[INFO] Setting up PeerConnection...");
+  function initializePeerConnection() {
     peerConnection = new RTCPeerConnection(configuration);
 
     peerConnection.onicecandidate = (event) => {
@@ -132,109 +77,97 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
-    remoteVideo.onloadedmetadata = () => {
-      console.log("Metadata loaded, attempting to play video.");
-      remoteVideo.play().catch((err) => {
-        console.error("Error playing video:", err);
-      });
-    };
-
     peerConnection.ontrack = (event) => {
       console.log("[DEBUG] ontrack event received on viewer:", event);
 
-      // Ensure remoteStream is initialized
-      if (!remoteStream) {
-        remoteStream = new MediaStream();
-        console.log("[INFO] New remote stream created.");
-      }
-
-      // Add the track to the remote stream
-      remoteStream.addTrack(event.track);
-      console.log("[INFO] Remote stream updated with new track:", event.track);
-
-      // Ensure remoteVideo exists and update its srcObject
-      if (remoteVideo) {
-        if (remoteVideo.srcObject !== remoteStream) {
-          remoteVideo.srcObject = remoteStream;
-          console.log(
-            "[INFO] remoteVideo.srcObject updated with remoteStream:",
-            remoteStream
-          );
-        }
-      } else {
-        console.error("[ERROR] Remote video element not found.");
-        return;
-      }
-
-      // Handle video-specific tracks
-      if (event.track.kind === "video") {
-        if (event.track.label === "screen") {
-          console.log("[INFO] Handling screen share track on viewer...");
-          handleScreenShareTrack(event.track);
-        } else {
-          console.log("[INFO] Handling main video track on viewer...");
-        }
-      } else {
-        console.warn(
-          "[WARNING] Non-video track received on viewer:",
-          event.track.kind
-        );
-      }
-
-      // Ensure the video plays when metadata is loaded
-      remoteVideo.onloadedmetadata = () => {
-        console.log("[INFO] Metadata loaded. Attempting to play video...");
-        remoteVideo.play().catch((err) => {
-          console.error("[ERROR] Failed to play video:", err);
+      if (event.streams && event.streams.length > 0) {
+        console.log('event: ', event);
+        event.streams[0].getTracks().forEach((track) => {
+          handleTrack(track, event);
         });
-      };
-
-      console.log("[INFO] Viewer video setup completed.");
+      } else {
+        console.log('dani1', event)
+        // Manejar tracks sin streams asociados
+        handleTrack(event.track);
+      }
     };
 
-    try {
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(offer)
-      );
-      console.log("[INFO] Remote description set successfully.");
-
-      const answer = await peerConnection.createAnswer();
-      console.log("[INFO] Answer created:", answer);
-
-      await peerConnection.setLocalDescription(answer);
-      console.log("[INFO] Local description set successfully:", answer);
-
-      websocket.send(JSON.stringify({ type: "answer", data: answer }));
-      console.log("[INFO] Answer sent to host.");
-    } catch (err) {
-      console.error("[ERROR] Error setting up PeerConnection:", err);
+    function handleTrack(track, event) {
+      console.log("[DEBUG] Track received:", track);
+      
+      if (track.kind === "video") {      
+        // Identificar el track de pantalla por el mid del transceiver
+        if (event.transceiver && event.transceiver.mid === "2") {
+          console.log("[INFO] Handling screen share track...");
+          const screenStream = new MediaStream([track]);
+          console.log('screenStream: ', screenStream);
+          
+          sharedScreen.srcObject = screenStream;
+          sharedScreen.classList.remove("d-none");
+          sharedScreen.classList.remove("video-small")
+          // Ajustar tamaños 
+          sharedScreen.classList.add("video-large");
+          remoteVideo.classList.add("video-small");
+          remoteVideo.classList.remove("video-large");
+        } else {
+          console.log("[INFO] Handling main video track...");
+          if (!remoteStream) {
+            remoteStream = new MediaStream();
+          }
+          remoteStream.addTrack(track);
+          remoteVideo.srcObject = remoteStream;
+        }
+      } else if (track.kind === "audio") {
+        console.log("[INFO] Handling audio track.");
+        if (!remoteStream) {
+          remoteStream = new MediaStream();
+        }
+        remoteStream.addTrack(track);
+      }
     }
   }
 
-  async function addIceCandidate(candidate) {
-    if (!peerConnection || !peerConnection.remoteDescription) {
+  function handleOffer(offer) {
+    console.log("[INFO] Handling offer received from host:", offer);
+
+    if (!peerConnection) {
+      console.error(
+        "[ERROR] PeerConnection is not initialized. Initializing now..."
+      );
+      initializePeerConnection();
+    }
+
+    peerConnection
+      .setRemoteDescription(new RTCSessionDescription(offer))
+      .then(async () => {
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        websocket.send(JSON.stringify({ type: "answer", data: answer }));
+        console.log("[INFO] Answer sent to host after handling new offer.");
+      })
+      .catch((error) => {
+        console.error("[ERROR] Error handling new offer:", error);
+      });
+  }
+
+  function handleIceCandidate(candidate) {
+    console.log("[INFO] Adding ICE candidate received from host:", candidate);
+    if (peerConnection && peerConnection.remoteDescription) {
+      peerConnection
+        .addIceCandidate(new RTCIceCandidate(candidate))
+        .then(() => {
+          console.log("[INFO] ICE candidate added successfully.");
+        })
+        .catch((err) => {
+          console.error("[ERROR] Error adding ICE candidate:", err);
+        });
+    } else {
       console.warn(
-        "[WARNING] Remote description is not set. Queueing ICE candidate."
+        "[WARNING] PeerConnection not ready. Queueing ICE candidate."
       );
       iceCandidateQueue.push(candidate);
-      return;
-    }
-
-    try {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-      console.log("[INFO] ICE candidate added successfully:", candidate);
-    } catch (error) {
-      console.error("[ERROR] Error adding ICE candidate:", error);
     }
   }
-
-  // Process queue after setting remote description
-  // function processIceQueue() {
-  //   while (iceCandidateQueue.length > 0) {
-  //     const candidate = iceCandidateQueue.shift();
-  //     addIceCandidate(candidate);
-  //   }
-  // }
 
   sharedScreen.addEventListener("click", () =>
     toggleScreenView(remoteVideo, sharedScreen)
