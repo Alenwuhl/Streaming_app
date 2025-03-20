@@ -60,7 +60,7 @@ async function startScreenShare() {
 function stopScreenShare(peerConnection, sharedScreen) {
   try {
     if (!window.WebRTC.isScreenSharing) {
-      console.warn("[INFO] No active screen sharing to stop.");
+      console.warn("[INFO] No hay screen share activo para detener.");
       return;
     }
 
@@ -80,11 +80,17 @@ function stopScreenShare(peerConnection, sharedScreen) {
     document.getElementById("localVideo").classList.add("video-large");
 
     window.WebRTC.isScreenSharing = false;
-    console.log("[INFO] Screen sharing stopped.");
+
+    const stopMessage = JSON.stringify({ type: "screen_share_ended" });
+    console.log("[DEBUG] Enviando mensaje WebRTC:", stopMessage);
+    window.WebRTC.websocket.send(stopMessage);
+
+    console.log("[INFO] Screen sharing detenido.");
   } catch (error) {
-    console.error("[ERROR] Failed to stop screen sharing:", error);
+    console.error("[ERROR] Error al detener el screen sharing:", error);
   }
 }
+
 
 // Function to handle the screen sharing
 async function initializeScreenSharing() {

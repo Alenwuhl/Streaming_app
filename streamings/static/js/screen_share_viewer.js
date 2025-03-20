@@ -16,23 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
 function handleScreenShareTrack(track) {
   if (track.kind === "video") {
     console.log("[INFO] Screen sharing track received.");
+    sharedScreenTrack = track;
     sharedScreenStream = new MediaStream([track]);
+
     const sharedScreen = document.getElementById("sharedScreen");
+    sharedScreen.srcObject = sharedScreenStream;
+    console.log("[INFO] Screen sharing started: ", sharedScreenStream);
+    sharedScreen.classList.remove("d-none");
 
-    if (sharedScreen) {
-      sharedScreen.srcObject = sharedScreenStream;
-      sharedScreen.classList.remove("d-none");
-      sharedScreen.classList.add("video-large");
-
-      // Asegurar que el video de la cámara se muestre pequeño
-      const remoteVideo = document.getElementById("hostVideo");
-      remoteVideo.classList.remove("video-large");
-      remoteVideo.classList.add("video-small");
-
-      console.log("[INFO] Screen sharing started:", sharedScreenStream);
-    } else {
-      console.error("[ERROR] Shared screen element not found.");
-    }
+    isScreenSharingActive = true;
 
     track.onended = () => stopScreenShareViewer();
   }
