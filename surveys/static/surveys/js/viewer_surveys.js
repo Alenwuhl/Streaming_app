@@ -1,65 +1,63 @@
+function getStreamIdFromURL() {
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+  const maybeId = pathParts[pathParts.length - 1];
+  return /^\d+$/.test(maybeId) ? maybeId : null;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const isHost = document.body.dataset.isHost === "true";
-  if (isHost) {
-    console.log("[INFO] Skipping viewer_surveys.js for host.");
-    return;
-  }
+  if (isHost) return;
+
+  const streamId = getStreamIdFromURL();
+  if (!streamId) return;
 
   const surveySocket = new WebSocket(
-    `ws://${window.location.host}/ws/surveys/`
+    `ws://${window.location.host}/ws/surveys/${streamId}/`
   );
-  const surveyContainer = document.getElementById("survey-container");
   const surveyForm = document.getElementById("active-survey");
   const surveyQuestion = document.getElementById("survey-question");
   const surveyOptions = document.getElementById("survey-options");
 
-  surveySocket.onopen = () => {
-    console.log("[INFO] Viewer WebSocket connection established.");
-  };
+  const votedOptionIds = new Set(); // Para prevenir múltiples votos
 
   surveySocket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
     if (data.type === "survey_start") {
-      console.log("[INFO] Displaying active survey for viewer...");
       surveyForm.classList.remove("d-none");
       surveyQuestion.textContent = data.question;
       surveyOptions.innerHTML = "";
 
-      data.options.forEach((option, index) => {
+      data.options.forEach((option) => {
+        const optionId = option.id;
+
         const optionElement = document.createElement("div");
-        optionElement.className = "option my-2";
+        optionElement.className = "option my-3";
         optionElement.innerHTML = `
-            <div class="mb-2">
-                <button class="btn btn-outline-primary btn-block vote-btn" data-index="${index}">
-                    ${option}
-                </button>
-                <div class="progress mt-2">
-                    <div id="progress-${index}" 
-                         class="progress-bar" 
-                         role="progressbar" 
-                         style="width: 0%" 
-                         aria-valuenow="0" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                    </div>
-                </div>
-                <small class="text-muted" id="votes-${index}">0 votes</small>
+          <button class="btn btn-outline-primary btn-block vote-btn" data-option-id="${optionId}">
+            ${option.text}
+          </button>
+          <div class="progress mt-2">
+            <div class="progress-bar" id="progress-${optionId}" role="progressbar" 
+                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
             </div>
+          </div>
+          <small class="text-muted" id="percentage-${optionId}">0%</small>
         `;
 
         const voteButton = optionElement.querySelector(".vote-btn");
         voteButton.addEventListener("click", () => {
-          console.log(`[INFO] Voting for option ${index}`);
+          if (votedOptionIds.has(optionId)) return;
           surveySocket.send(
             JSON.stringify({
               type: "survey_update",
-              option: index,
+              option_id: optionId,
             })
           );
-          surveyOptions.querySelectorAll(".vote-btn").forEach((btn) => {
-            btn.disabled = true;
-          });
+          votedOptionIds.add(optionId);
+          surveyOptions
+            .querySelectorAll(".vote-btn")
+            .forEach((btn) => (btn.disabled = true));
         });
 
         surveyOptions.appendChild(optionElement);
@@ -67,25 +65,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (data.type === "survey_update") {
-      console.log("[INFO] Updating survey results...", data.results);
-      data.results.forEach((result, index) => {
-        const progressBar = document.getElementById(`progress-${index}`);
-        const votesElement = document.getElementById(`votes-${index}`);
-        if (progressBar && votesElement) {
-          progressBar.style.width = `${result.percentage}%`;
-          votesElement.textContent = `${result.votes} vote${
-            result.votes !== 1 ? "s" : ""
-          }`;
+      data.results.forEach((result) => {
+        const optionId = result.option_id;
+        const percentage = result.percentage.toFixed(1);
+        const progress = document.getElementById(`progress-${optionId}`);
+        const label = document.getElementById(`percentage-${optionId}`);
+        if (progress && label) {
+          progress.style.width = `${percentage}%`;
+          progress.setAttribute("aria-valuenow", percentage);
+          label.textContent = `${percentage}%`;
         }
       });
     }
-  };
-
-  surveySocket.onclose = () => {
-    console.log("[INFO] Viewer WebSocket connection closed.");
-  };
-
-  surveySocket.onerror = (error) => {
-    console.error("[ERROR] Viewer WebSocket encountered an error:", error);
   };
 });

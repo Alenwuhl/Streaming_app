@@ -30,7 +30,9 @@
         <form id="surveyForm">
           <!-- Question -->
           <div class="form-group">
-            <label for="surveyQuestion" class="font-weight-bold">Question:</label>
+            <label for="surveyQuestion" class="font-weight-bold"
+              >Question:</label
+            >
             <input
               type="text"
               id="surveyQuestion"
@@ -42,7 +44,9 @@
 
           <!-- Options -->
           <div class="form-group">
-            <label for="surveyOptionsContainer" class="font-weight-bold">Options:</label>
+            <label for="surveyOptionsContainer" class="font-weight-bold"
+              >Options:</label
+            >
             <div id="surveyOptionsContainer">
               <input
                 type="text"
@@ -59,11 +63,12 @@
             </div>
             <button
               type="button"
-              class="btn btn-outline-primary btn-sm mt-2"
-              onclick="addSurveyOption()"
+              id="addOptionButton"
+              class="btn btn-secondary mt-2"
             >
-              <i class="fas fa-plus-circle"></i> Add Option
+              Add Option
             </button>
+
             <small class="form-text text-muted">
               You can add up to 5 options.
             </small>
@@ -71,7 +76,9 @@
 
           <!-- Time -->
           <div class="form-group">
-            <label for="surveyDuration" class="font-weight-bold">Duration (minutes):</label>
+            <label for="surveyDuration" class="font-weight-bold"
+              >Duration (minutes):</label
+            >
             <input
               type="number"
               id="surveyDuration"
@@ -85,17 +92,14 @@
 
       <!-- Footer -->
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          data-dismiss="modal"
-        >
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
           <i class="fas fa-times"></i> Close
         </button>
         <button
           type="button"
           id="createSurveyButton"
           class="btn btn-success"
+          disabled
         >
           <i class="fas fa-check-circle"></i> Create Survey
         </button>

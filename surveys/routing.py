@@ -1,6 +1,7 @@
-from django.urls import path
+# streamings/routing.py
+from django.urls import re_path
 from . import consumers
 
 websocket_urlpatterns = [
-    path('ws/surveys/', consumers.SurveyConsumer.as_asgi()),
+    re_path(r'ws/surveys/(?P<stream_id>\d+)/$', consumers.SurveyConsumer.as_asgi()),
 ]
