@@ -1,5 +1,2 @@
-/media/
-/media/
-*.mp4
-*.mov
-*.avi
+./media/
+*.webm
